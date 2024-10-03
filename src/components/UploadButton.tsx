@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -9,65 +9,65 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Upload } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/dialog'
+import { Upload } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 
 export default function UploadButton() {
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const { toast } = useToast();
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const { toast } = useToast()
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile && selectedFile.type === "application/pdf") {
-      setFile(selectedFile);
+    const selectedFile = event.target.files?.[0]
+    if (selectedFile && selectedFile.type === 'application/pdf') {
+      setFile(selectedFile)
     } else {
       toast({
-        title: "Error",
-        description: "Por favor, seleccione un archivo PDF válido.",
-        variant: "destructive",
-      });
+        title: 'Error',
+        description: 'Por favor, seleccione un archivo PDF válido.',
+        variant: 'destructive',
+      })
     }
-  };
+  }
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const droppedFile = event.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type === "application/pdf") {
-      setFile(droppedFile);
+    event.preventDefault()
+    const droppedFile = event.dataTransfer.files[0]
+    if (droppedFile && droppedFile.type === 'application/pdf') {
+      setFile(droppedFile)
     } else {
       toast({
-        title: "Error",
-        description: "Por favor, arrastre un archivo PDF válido.",
-        variant: "destructive",
-      });
+        title: 'Error',
+        description: 'Por favor, arrastre un archivo PDF válido.',
+        variant: 'destructive',
+      })
     }
-  };
+  }
 
   const handleUpload = () => {
     if (file) {
       // Simular carga al servidor
       toast({
-        title: "Cargando",
-        description: "Subiendo archivo...",
-      });
+        title: 'Cargando',
+        description: 'Subiendo archivo...',
+      })
       setTimeout(() => {
         toast({
-          title: "Éxito",
+          title: 'Éxito',
           description: `Archivo "${file.name}" cargado correctamente.`,
-        });
-        setFile(null);
-        setIsUploadOpen(false);
-      }, 1500);
+        })
+        setFile(null)
+        setIsUploadOpen(false)
+      }, 1500)
     } else {
       toast({
-        title: "Error",
-        description: "Por favor, seleccione un archivo PDF antes de cargar.",
-        variant: "destructive",
-      });
+        title: 'Error',
+        description: 'Por favor, seleccione un archivo PDF antes de cargar.',
+        variant: 'destructive',
+      })
     }
-  };
+  }
 
   return (
     <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
@@ -126,5 +126,5 @@ export default function UploadButton() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

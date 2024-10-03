@@ -1,6 +1,6 @@
-import React from "react";
+import React from 'react'
 const LoginPage = () => {
-  const handleLogin = () => {};
+  const handleLogin = () => {}
 
   return (
     <main className="md:flex h-screen">
@@ -72,7 +72,7 @@ const LoginPage = () => {
         </p>
       </div>
     </main>
-  );
-};
+  )
+}
 
-export default LoginPage;
+export default LoginPage

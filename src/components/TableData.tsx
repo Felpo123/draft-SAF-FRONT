@@ -5,17 +5,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "./ui/table";
+} from './ui/table'
 
 interface TableData {
-  id: number;
-  name: string;
-  email: string;
-  status: string;
+  id: number
+  name: string
+  email: string
+  status: string
 }
 
 interface TableDataProps {
-  data: TableData[];
+  data: TableData[]
 }
 
 const TableComponent = ({ data }: TableDataProps) => {
@@ -38,7 +38,7 @@ const TableComponent = ({ data }: TableDataProps) => {
         ))}
       </TableBody>
     </Table>
-  );
-};
+  )
+}
 
-export default TableComponent;
+export default TableComponent

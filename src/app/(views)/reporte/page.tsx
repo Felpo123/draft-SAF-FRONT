@@ -1,8 +1,8 @@
-"use client";
-import { AreaChart } from "@/components/BarChart";
-import { DonutChart } from "@/components/DonutChart";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+'use client'
+import { AreaChart } from '@/components/BarChart'
+import { DonutChart } from '@/components/DonutChart'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -10,8 +10,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   BarChart,
   PieChart,
@@ -22,101 +22,101 @@ import {
   Upload,
   AlertTriangle,
   Bell,
-} from "lucide-react";
+} from 'lucide-react'
 
 const AreaData = [
   {
-    date: "Jan 23",
+    date: 'Jan 23',
     SolarPanels: 2890,
     Inverters: 2338,
   },
   {
-    date: "Feb 23",
+    date: 'Feb 23',
     SolarPanels: 2756,
     Inverters: 2103,
   },
   {
-    date: "Mar 23",
+    date: 'Mar 23',
     SolarPanels: 3322,
     Inverters: 2194,
   },
   {
-    date: "Apr 23",
+    date: 'Apr 23',
     SolarPanels: 3470,
     Inverters: 2108,
   },
   {
-    date: "May 23",
+    date: 'May 23',
     SolarPanels: 3475,
     Inverters: 1812,
   },
   {
-    date: "Jun 23",
+    date: 'Jun 23',
     SolarPanels: 3129,
     Inverters: 1726,
   },
   {
-    date: "Jul 23",
+    date: 'Jul 23',
     SolarPanels: 3490,
     Inverters: 1982,
   },
   {
-    date: "Aug 23",
+    date: 'Aug 23',
     SolarPanels: 2903,
     Inverters: 2012,
   },
   {
-    date: "Sep 23",
+    date: 'Sep 23',
     SolarPanels: 2643,
     Inverters: 2342,
   },
   {
-    date: "Oct 23",
+    date: 'Oct 23',
     SolarPanels: 2837,
     Inverters: 2473,
   },
   {
-    date: "Nov 23",
+    date: 'Nov 23',
     SolarPanels: 2954,
     Inverters: 3848,
   },
   {
-    date: "Dec 23",
+    date: 'Dec 23',
     SolarPanels: 3239,
     Inverters: 3736,
   },
-];
+]
 
 const DonutData = [
   {
-    name: "SolarCells",
+    name: 'SolarCells',
     amount: 4890,
   },
   {
-    name: "Glass",
+    name: 'Glass',
     amount: 2103,
   },
   {
-    name: "JunctionBox",
+    name: 'JunctionBox',
     amount: 2050,
   },
   {
-    name: "Adhesive",
+    name: 'Adhesive',
     amount: 1300,
   },
   {
-    name: "BackSheet",
+    name: 'BackSheet',
     amount: 1100,
   },
   {
-    name: "Frame",
+    name: 'Frame',
     amount: 700,
   },
   {
-    name: "Encapsulant",
+    name: 'Encapsulant',
     amount: 200,
   },
-];
+]
 
 export default function IncidentReportDashboard() {
   return (
@@ -226,9 +226,9 @@ export default function IncidentReportDashboard() {
                   className="min-h-14 "
                   data={AreaData}
                   index="date"
-                  categories={["SolarPanels", "Inverters"]}
+                  categories={['SolarPanels', 'Inverters']}
                   valueFormatter={(number: number) =>
-                    `$${Intl.NumberFormat("us").format(number).toString()}`
+                    `$${Intl.NumberFormat('us').format(number).toString()}`
                   }
                   onValueChange={(v) => console.log(v)}
                   autoMinValue
@@ -251,7 +251,7 @@ export default function IncidentReportDashboard() {
                 category="name"
                 value="amount"
                 valueFormatter={(number: number) =>
-                  `$${Intl.NumberFormat("us").format(number).toString()}`
+                  `$${Intl.NumberFormat('us').format(number).toString()}`
                 }
                 className="w-full h-80"
               />
@@ -272,5 +272,5 @@ export default function IncidentReportDashboard() {
         </Button>
       </div>
     </div>
-  );
+  )
 }

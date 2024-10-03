@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   ColumnDef,
@@ -8,7 +8,7 @@ import {
   getPaginationRowModel,
   ColumnFiltersState,
   getFilteredRowModel,
-} from "@tanstack/react-table";
+} from '@tanstack/react-table'
 
 import {
   Table,
@@ -17,53 +17,53 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Edit3, FileText, LayoutDashboardIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { Incident } from "@/lib/data";
-import jsPDF from "jspdf";
-import UploadButton from "@/components/UploadButton";
-import React from "react";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Edit3, FileText, LayoutDashboardIcon } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Incident } from '@/lib/data'
+import jsPDF from 'jspdf'
+import UploadButton from '@/components/UploadButton'
+import React from 'react'
+import { Input } from '@/components/ui/input'
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+  columns: ColumnDef<TData, TValue>[]
+  data: TData[]
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  const router = useRouter();
+  const router = useRouter()
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
+    [],
+  )
 
   //add action column
 
   const generatePDF = async (incident: Incident) => {
-    const doc = new jsPDF();
-    doc.text("Este es un PDF generado en el frontend", 10, 10);
-    doc.text(`Nombre: ${incident.nombre}`, 10, 20);
-    doc.text(`Estado: ${incident.estado}`, 10, 30);
-    doc.text(`Origen: ${incident.origen}`, 10, 40);
-    doc.text(`Región: ${incident.region}`, 10, 50);
-    doc.text(`Provincia: ${incident.provincia}`, 10, 60);
-    doc.text(`Comuna: ${incident.comuna}`, 10, 70);
-    doc.text(`Ciudad: ${incident.ciudad}`, 10, 80);
-    doc.text(`Última Actualización: ${incident.ultima_actualizacion}`, 10, 90);
+    const doc = new jsPDF()
+    doc.text('Este es un PDF generado en el frontend', 10, 10)
+    doc.text(`Nombre: ${incident.nombre}`, 10, 20)
+    doc.text(`Estado: ${incident.estado}`, 10, 30)
+    doc.text(`Origen: ${incident.origen}`, 10, 40)
+    doc.text(`Región: ${incident.region}`, 10, 50)
+    doc.text(`Provincia: ${incident.provincia}`, 10, 60)
+    doc.text(`Comuna: ${incident.comuna}`, 10, 70)
+    doc.text(`Ciudad: ${incident.ciudad}`, 10, 80)
+    doc.text(`Última Actualización: ${incident.ultima_actualizacion}`, 10, 90)
 
-    doc.save(`${incident.nombre}.pdf`);
-  };
+    doc.save(`${incident.nombre}.pdf`)
+  }
 
-  if (!columns.find((column) => column.id === "actions")) {
+  if (!columns.find((column) => column.id === 'actions')) {
     columns.push({
-      id: "actions",
+      id: 'actions',
       header: () => <div className="text-center">Acciones</div>,
       cell: ({ row }) => {
-        const incident = row.original as Incident;
+        const incident = row.original as Incident
         return (
           <div className="flex items-center justify-between space-x-2">
             {/* Icono para Editar */}
@@ -72,7 +72,7 @@ export function DataTable<TData, TValue>({
               className="p-2 hover:bg-gray-200 rounded"
               variant="outline"
               onClick={() => {
-                router.push(`/incidente?action=edit&incident=${incident.id}`);
+                router.push(`/incidente?action=edit&incident=${incident.id}`)
               }}
             >
               <Edit3 size={20} />
@@ -83,7 +83,7 @@ export function DataTable<TData, TValue>({
               className="p-2 hover:bg-gray-200 rounded"
               variant="outline"
               onClick={() => {
-                router.push(`/dashboard?incident=${incident.id}`);
+                router.push(`/dashboard?incident=${incident.id}`)
               }}
             >
               <LayoutDashboardIcon size={20} />
@@ -100,9 +100,9 @@ export function DataTable<TData, TValue>({
               <FileText size={20} />
             </Button>
           </div>
-        );
+        )
       },
-    });
+    })
   }
 
   const table = useReactTable({
@@ -120,23 +120,23 @@ export function DataTable<TData, TValue>({
     state: {
       columnFilters,
     },
-  });
+  })
 
   return (
     <div>
       <div className="flex items-center justify-between py-4 gap-4">
         <Input
           placeholder="Filter names..."
-          value={(table.getColumn("nombre")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn('nombre')?.getFilterValue() as string) ?? ''}
           onChange={(event) =>
-            table.getColumn("nombre")?.setFilterValue(event.target.value)
+            table.getColumn('nombre')?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
 
         <Button
           className="rounded-sm bg-blue-500 text-white hover:bg-blue-600 w-40 flex-initial"
-          onClick={() => router.push("/incidente?action=create")}
+          onClick={() => router.push('/incidente?action=create')}
         >
           <span>Ingresar Incidente</span>
         </Button>
@@ -156,10 +156,10 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
-                  );
+                  )
                 })}
               </TableRow>
             ))}
@@ -169,9 +169,9 @@ export function DataTable<TData, TValue>({
               table.getRowModel().rows.map((row, rowIndex) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
+                  data-state={row.getIsSelected() && 'selected'}
                   className={`${
-                    rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                   } hover:bg-gray-100 transition-colors`}
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -181,7 +181,7 @@ export function DataTable<TData, TValue>({
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -219,5 +219,5 @@ export function DataTable<TData, TValue>({
         </Button>
       </div>
     </div>
-  );
+  )
 }

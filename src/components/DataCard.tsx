@@ -1,17 +1,11 @@
-import React from "react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "./ui/card";
+import React from 'react'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card'
 
 interface DataCardProps {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  classname?: string;
+  title: string
+  icon: React.ReactNode
+  children: React.ReactNode
+  classname?: string
 }
 
 const DataCard: React.FC<DataCardProps> = ({
@@ -37,7 +31,7 @@ const DataCard: React.FC<DataCardProps> = ({
         </p>
       </CardFooter>
     </Card>
-  );
-};
+  )
+}
 
-export default DataCard;
+export default DataCard

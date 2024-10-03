@@ -1,10 +1,10 @@
-import { Home, MapPinPlus, Menu, Settings } from "lucide-react";
+import { Home, MapPinPlus, Menu, Settings } from 'lucide-react'
 
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import Sidebar from "./Sidebar";
-import Link from "next/link";
-import { Button } from "./ui/button";
-import Image from "next/image";
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import Sidebar from './Sidebar'
+import Link from 'next/link'
+import { Button } from './ui/button'
+import Image from 'next/image'
 
 function MobileSidebar() {
   return (
@@ -14,7 +14,7 @@ function MobileSidebar() {
       </SheetTrigger>
       <SheetContent side="left" className="p-0 bg-white z-[1000]">
         <aside
-          className={`${"md:w-64"} md:flex flex-col transition-all duration-300 ease-in-out bg-white text-primary-foreground `}
+          className={`${'md:w-64'} md:flex flex-col transition-all duration-300 ease-in-out bg-white text-primary-foreground `}
         >
           <div className="flex items-center  space-x-2 p-4 ">
             <div className="w-16 h-16 bg-white flex items-center justify-center">
@@ -49,7 +49,7 @@ function MobileSidebar() {
         </aside>
       </SheetContent>
     </Sheet>
-  );
+  )
 }
 
-export default MobileSidebar;
+export default MobileSidebar

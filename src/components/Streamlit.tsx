@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 
 export default function StreamlitEmbed({ className }: MapCardProps) {
   return (
@@ -11,13 +11,13 @@ export default function StreamlitEmbed({ className }: MapCardProps) {
           src="http://localhost:8501"
           width="100%"
           height="800px"
-          style={{ border: "none", overflow: "hidden" }}
+          style={{ border: 'none', overflow: 'hidden' }}
         ></iframe>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 interface MapCardProps {
-  className?: string;
+  className?: string
 }

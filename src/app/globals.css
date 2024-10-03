@@ -27,3 +27,137 @@
     --radius: 0.5rem;
   }
 }
+
+/* Estilos para el Popup */
+.custom-popup {
+  max-width: 300px;
+}
+
+.popup-content {
+  font-family: Arial, sans-serif;
+}
+
+.layer-info {
+  margin-bottom: 15px;
+}
+
+.layer-info h5 {
+  margin-bottom: 5px;
+  color: #2c3e50;
+}
+
+.feature-info {
+  margin-left: 10px;
+}
+
+.feature-info p {
+  margin: 2px 0;
+}
+
+.feature-info hr {
+  border: none;
+  border-top: 1px solid #bdc3c7;
+  margin: 5px 0;
+}
+
+/* Estilos para el Panel de Control */
+.control-panel {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 15px;
+  background-color: rgba(128, 128, 128, 0.9);
+  border-radius: 5px;
+  z-index: 1;
+  max-width: 250px;
+  font-family: Arial, sans-serif;
+  color: #fff;
+}
+
+.summary {
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.layers-list {
+  max-height: 150px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
+.layer-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.layer-item input {
+  margin-right: 8px;
+}
+
+.zoom-controls {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.zoom-button {
+  padding: 5px 10px;
+  margin-bottom: 5px;
+  background-color: #34495e;
+  color: #ecf0f1;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.zoom-button:hover {
+  background-color: #2c3e50;
+}
+
+.zoom-level {
+  font-weight: bold;
+}
+/* Estilos para el Popup */
+/* Estilos para el Popup */
+.custom-popup {
+  max-width: 300px;
+  max-height: 250px; /* Establecer una altura máxima */
+  overflow-y: auto; /* Habilitar el desplazamiento vertical */
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.popup-content {
+  font-family: Arial, sans-serif;
+}
+
+.layer-info {
+  margin-bottom: 15px;
+}
+
+.layer-info h5 {
+  margin-bottom: 5px;
+  color: #3498db;
+  font-size: 16px;
+}
+
+.feature-info {
+  margin-left: 10px;
+}
+
+.feature-info p {
+  margin: 4px 0;
+  color: #ecf0f1;
+}
+
+.feature-info hr {
+  border: none;
+  border-top: 1px solid #bdc3c7;
+  margin: 8px 0;
+}

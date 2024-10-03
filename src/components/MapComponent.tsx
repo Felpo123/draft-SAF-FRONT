@@ -1,16 +1,16 @@
-import React, { Dispatch } from "react";
-import { Marker, Popup, TileLayer, useMapEvents } from "react-leaflet";
+import React, { Dispatch } from 'react'
+import { Marker, Popup, TileLayer, useMapEvents } from 'react-leaflet'
 
 interface MapComponentProps {
   setDashboardState: React.Dispatch<
     React.SetStateAction<{
-      revenue: string;
-      change: string;
-      newCustomers: string;
-      activeUsers: string;
-      bounceRate: string;
+      revenue: string
+      change: string
+      newCustomers: string
+      activeUsers: string
+      bounceRate: string
     }>
-  >;
+  >
 }
 
 function MapComponent({ setDashboardState }: MapComponentProps) {
@@ -25,12 +25,12 @@ function MapComponent({ setDashboardState }: MapComponentProps) {
         eventHandlers={{
           click: () => {
             setDashboardState({
-              revenue: "$50,000.00",
-              change: "+15% from last month",
-              newCustomers: "+2500",
-              activeUsers: "+13,000",
-              bounceRate: "-4.75%",
-            });
+              revenue: '$50,000.00',
+              change: '+15% from last month',
+              newCustomers: '+2500',
+              activeUsers: '+13,000',
+              bounceRate: '-4.75%',
+            })
           },
         }}
       >
@@ -39,7 +39,7 @@ function MapComponent({ setDashboardState }: MapComponentProps) {
         </Popup>
       </Marker>
     </>
-  );
+  )
 }
 
-export default MapComponent;
+export default MapComponent

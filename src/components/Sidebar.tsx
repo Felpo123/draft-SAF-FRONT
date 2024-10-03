@@ -1,4 +1,4 @@
-"use client";
+'use client'
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,21 +8,20 @@ import {
   MapPinPlus,
   Settings,
   Users,
-} from "lucide-react";
-import Link from "next/link";
-import React, { useState } from "react";
-import { Button } from "./ui/button";
-import Image from "next/image";
+} from 'lucide-react'
+import Link from 'next/link'
+import React, { useState } from 'react'
+import { Button } from './ui/button'
+import Image from 'next/image'
 
 function Sidebar() {
-  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false)
 
-  const toggleSidebar = () => setSidebarExpanded(!sidebarExpanded);
+  const toggleSidebar = () => setSidebarExpanded(!sidebarExpanded)
   return (
     <aside
-      className={`${
-        sidebarExpanded ? "md:w-64" : "md:w-20"
-      } xl:flex flex-col transition-all duration-300 ease-in-out bg-white text-primary-foreground relative hidden`}
+      className={`${sidebarExpanded ? 'md:w-64' : 'md:w-20'
+        } xl:flex flex-col transition-all duration-300 ease-in-out bg-white text-primary-foreground relative hidden shadow-md `}
     >
       <div className="flex items-center  space-x-2 p-4 ">
         <div className="w-16 h-16 bg-white flex items-center justify-center">
@@ -74,7 +73,7 @@ function Sidebar() {
         </div>
       </div>
     </aside>
-  );
+  )
 }
 
-export default Sidebar;
+export default Sidebar

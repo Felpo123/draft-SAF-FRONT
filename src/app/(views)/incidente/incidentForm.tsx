@@ -1,149 +1,149 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react'
 import {
   MapContainer,
   TileLayer,
   Marker,
   Circle,
   useMapEvents,
-} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-import { z } from "zod";
-import { Incident } from "@/lib/data";
+} from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
+import { z } from 'zod'
+import { Incident } from '@/lib/data'
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-icon-2x.png",
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-icon-2x.png',
   iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-icon.png",
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-icon.png',
   shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png",
-});
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
+})
 
 // Define the zones, origins, and incident types
-const zones = ["Continental", "Insular", "Antartica"] as const;
+const zones = ['Continental', 'Insular', 'Antartica'] as const
 const origins = [
-  "Sin informacion",
-  "Antropico",
-  "Biologico",
-  "Natural",
-] as const;
+  'Sin informacion',
+  'Antropico',
+  'Biologico',
+  'Natural',
+] as const
 const incidentTypes = [
-  "Incendios",
-  "Inundaciones",
-  "Remociones en masa",
-  "Terremotos",
-  "Tsunamis",
-] as const;
+  'Incendios',
+  'Inundaciones',
+  'Remociones en masa',
+  'Terremotos',
+  'Tsunamis',
+] as const
 
 // Zod schema for form validation
 const formSchema = z.object({
-  datetime: z.string().min(1, { message: "Fecha y hora es requerido" }),
-  name: z.string().min(1, { message: "Nombre del incidente es requerido" }),
+  datetime: z.string().min(1, { message: 'Fecha y hora es requerido' }),
+  name: z.string().min(1, { message: 'Nombre del incidente es requerido' }),
   zone: z.enum(zones, {
-    errorMap: () => ({ message: "Zona del incidente es requerida" }),
+    errorMap: () => ({ message: 'Zona del incidente es requerida' }),
   }),
   origin: z.enum(origins, {
-    errorMap: () => ({ message: "Origen del incidente es requerido" }),
+    errorMap: () => ({ message: 'Origen del incidente es requerido' }),
   }),
   incidentType: z.enum(incidentTypes, {
-    errorMap: () => ({ message: "Tipo de incidente es requerido" }),
+    errorMap: () => ({ message: 'Tipo de incidente es requerido' }),
   }),
   subcategory: z.string().optional(),
-  description: z.string().min(1, { message: "Descripción es requerida" }),
+  description: z.string().min(1, { message: 'Descripción es requerida' }),
   radius: z
     .number()
-    .min(0, { message: "El radio debe ser un número positivo" }),
-});
+    .min(0, { message: 'El radio debe ser un número positivo' }),
+})
 
 // Infer the type from the schema
-type FormData = z.infer<typeof formSchema>;
+type FormData = z.infer<typeof formSchema>
 
 // Define the type for errors
 type FormErrors = {
-  [K in keyof FormData]?: string;
-};
+  [K in keyof FormData]?: string
+}
 
 interface MapEventsProps {
-  onLocationSelected: (latlng: L.LatLng) => void;
+  onLocationSelected: (latlng: L.LatLng) => void
 }
 
 function MapEvents({ onLocationSelected }: MapEventsProps) {
   useMapEvents({
     click(e) {
-      onLocationSelected(e.latlng);
+      onLocationSelected(e.latlng)
     },
-  });
-  return null;
+  })
+  return null
 }
 
 interface IncidentFormProps {
-  action?: string;
-  incident?: Incident;
+  action?: string
+  incident?: Incident
 }
 
 export default function IncidentForm({ action, incident }: IncidentFormProps) {
   const [formData, setFormData] = useState<FormData>({
-    datetime: incident?.ultima_actualizacion || "",
-    name: incident?.nombre || "",
-    zone: incident?.zona || ("" as FormData["zone"]),
-    origin: incident?.origen || ("" as FormData["origin"]),
-    incidentType: incident?.tipo || ("" as FormData["incidentType"]),
-    subcategory: "",
-    description: "",
+    datetime: incident?.ultima_actualizacion || '',
+    name: incident?.nombre || '',
+    zone: incident?.zona || ('' as FormData['zone']),
+    origin: incident?.origen || ('' as FormData['origin']),
+    incidentType: incident?.tipo || ('' as FormData['incidentType']),
+    subcategory: '',
+    description: '',
     radius: 50,
-  });
+  })
   const initialLocation = incident?.coordenada
     ? new L.LatLng(incident.coordenada.lat, incident.coordenada.lng)
-    : null;
+    : null
 
-  const [location, setLocation] = useState<L.LatLng | null>(initialLocation);
-  const [isFormValid, setIsFormValid] = useState<boolean>(false);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [location, setLocation] = useState<L.LatLng | null>(initialLocation)
+  const [isFormValid, setIsFormValid] = useState<boolean>(false)
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const handleLocationSelected = (latlng: L.LatLng) => {
-    setLocation(latlng);
-  };
+    setLocation(latlng)
+  }
 
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    >,
   ) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData((prevData) => ({
       ...prevData,
-      [name]: name === "radius" ? parseFloat(value) || 0 : value,
-    }));
-  };
+      [name]: name === 'radius' ? parseFloat(value) || 0 : value,
+    }))
+  }
 
   useEffect(() => {
     const validateForm = () => {
       try {
-        formSchema.parse(formData);
-        setErrors({});
-        setIsFormValid(location !== null);
+        formSchema.parse(formData)
+        setErrors({})
+        setIsFormValid(location !== null)
       } catch (error) {
         if (error instanceof z.ZodError) {
-          const newErrors: FormErrors = {};
+          const newErrors: FormErrors = {}
           error.errors.forEach((err) => {
             if (err.path[0]) {
-              newErrors[err.path[0] as keyof FormData] = err.message;
+              newErrors[err.path[0] as keyof FormData] = err.message
             }
-          });
-          setErrors(newErrors);
-          setIsFormValid(false);
+          })
+          setErrors(newErrors)
+          setIsFormValid(false)
         }
       }
-    };
+    }
 
-    validateForm();
-  }, [formData, location]);
+    validateForm()
+  }, [formData, location])
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    e.preventDefault()
     if (isFormValid && location) {
       const alertMessage = `
         Fecha y hora: ${formData.datetime}
@@ -151,14 +151,14 @@ export default function IncidentForm({ action, incident }: IncidentFormProps) {
         Zona: ${formData.zone}
         Origen: ${formData.origin}
         Tipo de incidente: ${formData.incidentType}
-        Subcategoría: ${formData.subcategory || "No especificada"}
+        Subcategoría: ${formData.subcategory || 'No especificada'}
         Descripción: ${formData.description}
         Radio: ${formData.radius} km
         Coordenadas: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}
-      `;
-      alert(alertMessage);
+      `
+      alert(alertMessage)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -180,7 +180,7 @@ export default function IncidentForm({ action, incident }: IncidentFormProps) {
                 value={formData.datetime}
                 onChange={handleInputChange}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.datetime ? "border-red-500" : "border-gray-300"
+                  errors.datetime ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
               {errors.datetime && (
@@ -201,7 +201,7 @@ export default function IncidentForm({ action, incident }: IncidentFormProps) {
                 value={formData.name}
                 onChange={handleInputChange}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.name ? "border-red-500" : "border-gray-300"
+                  errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
               {errors.name && (
@@ -221,7 +221,7 @@ export default function IncidentForm({ action, incident }: IncidentFormProps) {
                 value={formData.zone}
                 onChange={handleInputChange}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.zone ? "border-red-500" : "border-gray-300"
+                  errors.zone ? 'border-red-500' : 'border-gray-300'
                 }`}
               >
                 <option value="">Seleccione una zona</option>
@@ -248,7 +248,7 @@ export default function IncidentForm({ action, incident }: IncidentFormProps) {
                 value={formData.origin}
                 onChange={handleInputChange}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.origin ? "border-red-500" : "border-gray-300"
+                  errors.origin ? 'border-red-500' : 'border-gray-300'
                 }`}
               >
                 <option value="">Seleccione un origen</option>
@@ -275,7 +275,7 @@ export default function IncidentForm({ action, incident }: IncidentFormProps) {
                 value={formData.incidentType}
                 onChange={handleInputChange}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.incidentType ? "border-red-500" : "border-gray-300"
+                  errors.incidentType ? 'border-red-500' : 'border-gray-300'
                 }`}
               >
                 <option value="">Seleccione un tipo</option>
@@ -323,7 +323,7 @@ export default function IncidentForm({ action, incident }: IncidentFormProps) {
                 value={formData.description}
                 onChange={handleInputChange}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.description ? "border-red-500" : "border-gray-300"
+                  errors.description ? 'border-red-500' : 'border-gray-300'
                 }`}
               ></textarea>
               {errors.description && (
@@ -342,7 +342,7 @@ export default function IncidentForm({ action, incident }: IncidentFormProps) {
                 location ? [location.lat, location.lng] : [-33.0472, -71.6127]
               }
               zoom={10}
-              style={{ height: "400px", width: "100%" }}
+              style={{ height: '400px', width: '100%' }}
             >
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               <MapEvents onLocationSelected={handleLocationSelected} />
@@ -352,14 +352,14 @@ export default function IncidentForm({ action, incident }: IncidentFormProps) {
                   <Circle
                     center={[location.lat, location.lng]}
                     radius={formData.radius * 1000} // Convert km to meters
-                    pathOptions={{ color: "red", fillColor: "red" }}
+                    pathOptions={{ color: 'red', fillColor: 'red' }}
                   />
                 </>
               )}
             </MapContainer>
             {location ? (
               <p className="mt-2 text-sm text-gray-600">
-                Coordenadas seleccionadas: {location.lat.toFixed(4)},{" "}
+                Coordenadas seleccionadas: {location.lat.toFixed(4)},{' '}
                 {location.lng.toFixed(4)}
               </p>
             ) : (
@@ -384,7 +384,7 @@ export default function IncidentForm({ action, incident }: IncidentFormProps) {
               min="0"
               step="1"
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.radius ? "border-red-500" : "border-gray-300"
+                errors.radius ? 'border-red-500' : 'border-gray-300'
               }`}
             />
             {errors.radius && (
@@ -397,17 +397,17 @@ export default function IncidentForm({ action, incident }: IncidentFormProps) {
               disabled={!isFormValid}
               className={`w-full px-4 py-2 text-white font-semibold rounded-md ${
                 isFormValid
-                  ? "bg-blue-500 hover:bg-blue-600"
-                  : "bg-gray-300 cursor-not-allowed"
+                  ? 'bg-blue-500 hover:bg-blue-600'
+                  : 'bg-gray-300 cursor-not-allowed'
               }`}
             >
-              {action === "create"
-                ? "Registrar Incidente"
-                : "Actualizar Incidente"}
+              {action === 'create'
+                ? 'Registrar Incidente'
+                : 'Actualizar Incidente'}
             </button>
           </div>
         </form>
       </div>
     </div>
-  );
+  )
 }

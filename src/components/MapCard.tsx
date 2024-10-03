@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import {
   Circle,
   FeatureGroup,
@@ -13,7 +13,7 @@ import {
   TileLayer,
   useMap,
   useMapEvents,
-} from "react-leaflet";
+} from 'react-leaflet'
 import {
   LayerEvent,
   LayersControlEvent,
@@ -22,81 +22,81 @@ import {
   LayerGroup as LeafletLayerGroup,
   Layer,
   map,
-} from "leaflet";
-import "leaflet/dist/leaflet.css";
+} from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
-import L from "leaflet";
+import L from 'leaflet'
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-icon-2x.png",
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-icon-2x.png',
   iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-icon.png",
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-icon.png',
   shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png",
-});
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
+})
 
 interface MapCardProps {
-  className?: string;
-  selectedEvent?: string;
-  location?: { lat: number; lng: number };
+  className?: string
+  selectedEvent?: string
+  location?: { lat: number; lng: number }
 }
 
 function MapCard({ className, selectedEvent, location }: MapCardProps) {
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [activeLayer, setActiveLayer] = useState<Layer | null>();
-  const cardRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<leafletMap | null>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+  const [activeLayer, setActiveLayer] = useState<Layer | null>()
+  const cardRef = useRef<HTMLDivElement | null>(null)
+  const mapRef = useRef<leafletMap | null>(null)
 
   useEffect(() => {
     const updateDimensions = () => {
       if (cardRef.current) {
-        const { width, height } = cardRef.current.getBoundingClientRect();
-        console.log("height", height);
+        const { width, height } = cardRef.current.getBoundingClientRect()
+        console.log('height', height)
         if (height < 200) {
-          setDimensions({ width, height: 500 });
+          setDimensions({ width, height: 500 })
         } else {
-          setDimensions({ width, height: height - 60 });
+          setDimensions({ width, height: height - 60 })
         }
       }
-    };
+    }
 
-    updateDimensions();
-  }, []);
+    updateDimensions()
+  }, [])
 
   useEffect(() => {
     if (mapRef.current) {
-      mapRef.current.invalidateSize();
+      mapRef.current.invalidateSize()
     }
-  }, [dimensions]);
+  }, [dimensions])
 
   useEffect(() => {
     if (mapRef.current && selectedEvent) {
       if (activeLayer) {
-        mapRef.current.removeLayer(activeLayer);
+        mapRef.current.removeLayer(activeLayer)
       }
 
-      if (selectedEvent === "1") {
+      if (selectedEvent === '1') {
         const layerGroup = new L.LayerGroup([
-          new L.Circle([51.505, -0.09], { radius: 200, color: "blue" }),
-        ]);
-        mapRef.current.addLayer(layerGroup);
-        setActiveLayer(layerGroup);
-      } else if (selectedEvent === "2") {
+          new L.Circle([51.505, -0.09], { radius: 200, color: 'blue' }),
+        ])
+        mapRef.current.addLayer(layerGroup)
+        setActiveLayer(layerGroup)
+      } else if (selectedEvent === '2') {
         const layerGroup = new L.LayerGroup([
-          new L.Circle([51.51, -0.1], { radius: 150, color: "green" }),
-        ]);
-        mapRef.current.addLayer(layerGroup);
-        setActiveLayer(layerGroup);
+          new L.Circle([51.51, -0.1], { radius: 150, color: 'green' }),
+        ])
+        mapRef.current.addLayer(layerGroup)
+        setActiveLayer(layerGroup)
       }
     }
-  }, [selectedEvent]);
+  }, [selectedEvent])
 
   return (
     <Card className={`${className} card-container`} ref={cardRef}>
       <CardHeader className="p-5"></CardHeader>
       <CardContent
-        style={{ height: `${dimensions.height}px`, maxHeight: "80vh" }}
+        style={{ height: `${dimensions.height}px`, maxHeight: '80vh' }}
       >
         <MapContainer
           center={
@@ -104,7 +104,7 @@ function MapCard({ className, selectedEvent, location }: MapCardProps) {
           }
           zoom={13}
           scrollWheelZoom={false}
-          style={{ height: "100%", width: "100%" }}
+          style={{ height: '100%', width: '100%' }}
           ref={mapRef}
         >
           <TileLayer
@@ -124,29 +124,29 @@ function MapCard({ className, selectedEvent, location }: MapCardProps) {
               <LayerGroup>
                 <Circle
                   center={[51.505, -0.09]}
-                  pathOptions={{ fillColor: "blue" }}
+                  pathOptions={{ fillColor: 'blue' }}
                   radius={200}
-                  key={"CIRCLE1"}
+                  key={'CIRCLE1'}
                 />
                 <Circle
                   center={[51.505, -0.09]}
-                  pathOptions={{ fillColor: "red" }}
+                  pathOptions={{ fillColor: 'red' }}
                   radius={100}
                   stroke={false}
-                  key={"CIRCLE2"}
+                  key={'CIRCLE2'}
                 />
                 <LayerGroup>
                   <Circle
                     center={[51.51, -0.08]}
-                    pathOptions={{ color: "green", fillColor: "green" }}
+                    pathOptions={{ color: 'green', fillColor: 'green' }}
                     radius={100}
-                    key={"CIRCLE3"}
+                    key={'CIRCLE3'}
                   />
                 </LayerGroup>
               </LayerGroup>
             </LayersControl.BaseLayer>
             <LayersControl.BaseLayer name="Feature group">
-              <FeatureGroup pathOptions={{ color: "purple" }}>
+              <FeatureGroup pathOptions={{ color: 'purple' }}>
                 <Popup>Popup in FeatureGroup</Popup>
                 <Circle center={[51.51, -0.06]} radius={200} />
                 <Rectangle
@@ -162,7 +162,7 @@ function MapCard({ className, selectedEvent, location }: MapCardProps) {
         </MapContainer>
       </CardContent>
     </Card>
-  );
+  )
 }
 
-export default MapCard;
+export default MapCard

@@ -1,5 +1,5 @@
-import Header from "@/components/Header";
-import Sidebar from "@/components/Sidebar";
+import Header from '@/components/Header'
+import Sidebar from '@/components/Sidebar'
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,6 +14,6 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
-  );
+  )
 }
-export default DashboardLayout;
+export default DashboardLayout
