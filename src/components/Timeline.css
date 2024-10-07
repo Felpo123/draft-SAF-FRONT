@@ -1,0 +1,47 @@
+.timeline-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin: 20px 0;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .timeline-item {
+    display: inline-block;
+    cursor: pointer;
+    text-align: center;
+    margin: 0 10px;
+    position: relative;
+  }
+  
+  .timeline-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #007cbf;
+    margin: 0 auto;
+    transition: background-color 0.3s;
+  }
+  
+  .timeline-item.active .timeline-dot {
+    background-color: #ff5733; /* Color para el elemento activo */
+  }
+  
+  .timeline-date {
+    margin-top: 5px;
+    font-size: 14px;
+  }
+  
+  .timeline-container::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #ccc;
+    z-index: -1;
+  }
+  
