@@ -13,7 +13,7 @@ interface WeatherCardProps {
 
 function WeatherCard({ weatherInfo }: WeatherCardProps) {
   return (
-    <div className="absolute right-44 top-6 space-x-4 flex">
+    <div className="absolute right-52 top-6 space-x-4 flex">
       {weatherInfo.map(({ day, icon, id, tempeture }) => (
         <div
           key={id}

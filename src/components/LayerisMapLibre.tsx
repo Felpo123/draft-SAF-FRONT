@@ -369,7 +369,48 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
 
   }, []);
 
+  useEffect(() => {
+    if (mapRef.current) {
+      // Obtener todas las capas que ya no están activas y eliminarlas del mapa
+      availableLayers.forEach((layer) => {
+        if (!activeLayers.includes(layer.id)) {
+          if (mapRef.current.getLayer(layer.id)) {
+            mapRef.current.removeLayer(layer.id);
+          }
+          if (mapRef.current.getSource(layer.id)) {
+            mapRef.current.removeSource(layer.id);
+          }
+        }
+      });
 
+      // Agregar las nuevas capas activas
+      availableLayers
+        .filter((layer) => activeLayers.includes(layer.id))
+        .forEach((layer) => {
+          const bboxToWMS = [/* valores del bounding box (bbox) */];
+
+          // Verificar si la capa ya está agregada antes de añadirla
+          if (!mapRef.current.getSource(layer.id)) {
+            // Añadir la fuente raster
+            mapRef.current.addSource(layer.id, {
+              type: 'raster',
+              tiles: [
+                `geoserver/desafio/wms?service=WMS&request=GetMap&layers=${layer.url}&styles=${layer.style}&format=image/png&transparent=true&version=1.1.1&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256`,
+              ],
+              tileSize: 256,
+              bounds: bbox, // Limitar la visualización usando el bounding box
+            });
+
+            // Añadir la capa raster
+            mapRef.current.addLayer({
+              id: layer.id,
+              type: 'raster',
+              source: layer.id,
+            });
+          }
+        });
+    }
+  }, [activeLayers, availableLayers, bbox]);
 
   return (
     <div className='h-[100vh] w-full relative'>
@@ -392,27 +433,6 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
         ref={mapContainer}
         style={{ width: '100%', height: '100vh' }}
       >
-
-        {availableLayers
-          .filter((layer) => activeLayers.includes(layer.id))
-          .map((layer) => {
-            return (
-              <Source
-                key={layer.id}
-                type="raster"
-                tiles={[
-                  `geoserver/desafio/wms?service=WMS&request=GetMap&layers=${layer.url}&styles=${layer.style}&format=image/png&transparent=true&version=1.1.1&srs=EPSG:3857&bbox=${bboxToWMS.join(',')}&width=256&height=256`,
-                ]}
-                bounds={bbox} // Usamos el bounding box para limitar la visualización
-                scheme={'xyz'}
-
-              >
-                <Layer id={layer.id} type="raster" />
-              </Source>
-            )
-          })}
-
-
 
       </div>
 
