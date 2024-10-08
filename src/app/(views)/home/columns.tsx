@@ -1,39 +1,36 @@
 'use client'
 
 import { Incident } from '@/lib/data'
+import { Feature, Geojson } from '@/lib/mapUtils'
 import { ColumnDef } from '@tanstack/react-table'
 
-export const columns: ColumnDef<Incident>[] = [
+export const columns: ColumnDef<Feature>[] = [
   {
-    accessorKey: 'nombre',
+    accessorKey: 'properties.nom_event',
     header: 'Nombre',
   },
   {
-    accessorKey: 'estado',
+    accessorKey: 'properties.estado',
     header: 'Estado',
   },
   {
-    accessorKey: 'origen',
+    accessorKey: 'properties.tipo_event',
     header: 'Origen',
   },
   {
-    accessorKey: 'region',
+    accessorKey: 'properties.nom_reg',
     header: 'Región',
   },
   {
-    accessorKey: 'provincia',
+    accessorKey: 'properties.nom_pro',
     header: 'Provincia',
   },
   {
-    accessorKey: 'comuna',
+    accessorKey: 'properties.nom_com',
     header: 'Comuna',
   },
   {
-    accessorKey: 'ciudad',
-    header: 'Ciudad',
-  },
-  {
-    accessorKey: 'ultima_actualizacion',
+    accessorKey: 'properties.superf',
     header: 'Última Actualización',
   },
 ]

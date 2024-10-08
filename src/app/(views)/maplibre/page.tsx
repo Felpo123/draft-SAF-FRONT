@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { date, number } from 'zod'
 import dynamic from 'next/dynamic'
 import { extractDatesAndIds, fetchIncidentGEOJSON } from '@/lib/mapUtils'
+import { notFound } from 'next/navigation'
 
 // Cargar el componente dinámicamente deshabilitando SSR
 const DynamicMap = dynamic(
@@ -25,7 +26,7 @@ async function MapLibrePage({
   const geojsonData = await fetchIncidentGEOJSON(idEvent)
 
   if (!geojsonData) {
-    return <div>No se encontró información para el incidente</div>
+    return notFound();
   }
 
   return (

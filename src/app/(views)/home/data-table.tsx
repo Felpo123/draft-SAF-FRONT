@@ -26,6 +26,7 @@ import jsPDF from 'jspdf'
 import UploadButton from '@/components/UploadButton'
 import React from 'react'
 import { Input } from '@/components/ui/input'
+import { Feature } from '@/lib/mapUtils'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -63,7 +64,7 @@ export function DataTable<TData, TValue>({
       id: 'actions',
       header: () => <div className="text-center">Acciones</div>,
       cell: ({ row }) => {
-        const incident = row.original as Incident
+        const incident = row.original as Feature
         return (
           <div className="flex items-center justify-between space-x-2">
             {/* Icono para Editar */}
@@ -72,7 +73,7 @@ export function DataTable<TData, TValue>({
               className="p-2 hover:bg-gray-200 rounded"
               variant="outline"
               onClick={() => {
-                router.push(`/incidente?action=edit&incident=${incident.id}`)
+                router.push(`/incidente?action=edit&incident=${incident.properties.id}`)
               }}
             >
               <Edit3 size={20} />
@@ -83,7 +84,7 @@ export function DataTable<TData, TValue>({
               className="p-2 hover:bg-gray-200 rounded"
               variant="outline"
               onClick={() => {
-                router.push(`/dashboard?incident=${incident.id}`)
+                router.push(`/maplibre?idEvent=${incident.properties.id_evento}`)
               }}
             >
               <LayoutDashboardIcon size={20} />
@@ -95,7 +96,7 @@ export function DataTable<TData, TValue>({
               aria-label="Download Report"
               className="p-2 hover:bg-gray-200 rounded"
               variant="outline"
-              onClick={() => generatePDF(incident)}
+              onClick={() => console.log('Download Report')}
             >
               <FileText size={20} />
             </Button>
@@ -155,9 +156,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   )
                 })}
@@ -170,9 +171,8 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className={`${
-                    rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                  } hover:bg-gray-100 transition-colors`}
+                  className={`${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    } hover:bg-gray-100 transition-colors`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell

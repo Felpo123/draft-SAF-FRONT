@@ -427,16 +427,12 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
         </select>
       </div>
 
-
-
       <div
         ref={mapContainer}
         style={{ width: '100%', height: '100vh' }}
       >
 
       </div>
-
-
 
       <Timeline dates={dates} selectedDate={currentIndex} handleDateSelect={handleDateChange} />
 

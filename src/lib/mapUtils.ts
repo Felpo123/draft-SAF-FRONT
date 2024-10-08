@@ -148,3 +148,26 @@ export const calculateBoundingBox2 = (lng: number, lat: number, radiusInKm: numb
 
   return [minX, minY, maxX, maxY];
 };
+
+export function agruparIncidentesPorEvento(incidentes: Feature[]): Feature[] {
+  const incidentesAgrupados = {};
+
+  incidentes.forEach((incidente) => {
+    const idEvento = incidente.properties.id_evento;
+    const superficie = incidente.properties.superf;
+
+    if (!incidentesAgrupados[idEvento]) {
+      // Crear un nuevo registro en el objeto agrupado si no existe
+      incidentesAgrupados[idEvento] = {
+        ...incidente,
+        properties: { ...incidente.properties, superf: superficie }
+      };
+    } else {
+      // Sumar la superficie afectada y redondear a 1 decimal
+      incidentesAgrupados[idEvento].properties.superf = 
+        Math.round((incidentesAgrupados[idEvento].properties.superf + superficie) * 10) / 10;
+    }
+  });
+
+  return Object.values(incidentesAgrupados);
+}
