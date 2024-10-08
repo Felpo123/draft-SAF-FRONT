@@ -11,9 +11,11 @@ import Timeline from './TimelineMapBar'
 import { calculateBoundingBox, calculateBoundingBox2, extractDatesAndIds, Geojson } from '@/lib/mapUtils';
 import { set } from 'zod';
 import { features } from 'process';
+import { MapPin } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 
-export type Section = 'infrastructure' | 'graphs' | 'resources';
+export type Section = 'infrastructure' | 'graphs' | 'resources' | 'satellite';
 
 interface LayerisMapLibreProps {
   incidentId?: string
@@ -55,7 +57,8 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
   };
 
   const handleProvinciaChange = (event) => {
-    const provincia = event.target.value;
+    console.log('Provincia seleccionada:', event);
+    const provincia = event;
     setSelectedProvincia(provincia);
 
     // Filtrar datos solo si no se ha seleccionado "Todo el desastre"
@@ -86,6 +89,7 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
     infrastructure: true,
     graphs: true,
     resources: true,
+    satellite: true,
   })
 
   const toggleSection = (section: Section) => {
@@ -415,24 +419,43 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
   return (
     <div className='h-[100vh] w-full relative'>
 
-      {/* Selector de provincia */}
-      <div className='provincias z-[1000]'>
-        <label htmlFor="provinciaSelect">Filtrar por Provincia:</label>
-        <select id="provinciaSelect" value={selectedProvincia} onChange={handleProvinciaChange}>
-          {provincias.map((provincia) => (
-            <option key={provincia} value={provincia}>
-              {provincia}
-            </option>
-          ))}
-        </select>
-      </div>
-
       <div
         ref={mapContainer}
         style={{ width: '100%', height: '100vh' }}
       >
 
       </div>
+
+      {/* Titulo */}
+
+      <div className="absolute top-24 left-4 z-[1000]">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full shadow-lg">
+          <h1 className="text-xl font-bold tracking-wider">
+            Valparaiso <span className="text-yellow-300">{2024}</span>
+          </h1>
+        </div>
+      </div>
+
+      {/* Selector de provincia */}
+
+      <div className="absolute top-24 left-64 flex items-center space-x-4 bg-white rounded-full shadow-lg py-1.5 px-4" style={{ zIndex: 1000 }}>
+        <MapPin className="h-5 w-5 text-blue-500" />
+        <Select value={selectedProvincia} onValueChange={handleProvinciaChange}>
+          <SelectTrigger className="w-[170px] border-none shadow-none focus:ring-0 ">
+            <SelectValue placeholder="Selecciona una provincia" />
+          </SelectTrigger>
+          <SelectContent className='z-[1000]'>
+            {provincias.map((province) => (
+              <SelectItem key={province} value={province}>
+                {province}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+      </div>
+
+
 
       <Timeline dates={dates} selectedDate={currentIndex} handleDateSelect={handleDateChange} />
 
@@ -485,7 +508,30 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
         <div className="zoom-level">
           Nivel de zoom: {viewState.zoom.toFixed(2)}
         </div>
+
       </div>
+
+      {/* Satellite Card*/}
+
+      {
+        activeSection.satellite && (
+
+          <div className="absolute  bottom-4 left-4 space-x-4 flex">
+
+            <div
+              className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm w-full max-w-sm"
+            >
+              <div>
+                <p className="text-sm font-medium text-gray-900">MODIS</p>
+                <p className="text-2xl font-bold text-gray-900">2:48:21</p>
+              </div>
+
+              <div className={`p-2 rounded-full text-2xl `}>📡</div>
+            </div>
+
+          </div>
+        )
+      }
     </div >
   )
 }

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button } from './ui/button'
-import { BarChart2, Building2, CloudMoon } from 'lucide-react'
+import { BarChart2, Building2, CloudMoon, Satellite } from 'lucide-react'
 import { Section } from './LayerisMapLibre'
 
 interface MapBarProps {
@@ -8,6 +8,7 @@ interface MapBarProps {
     infrastructure: boolean
     graphs: boolean
     resources: boolean
+    satellite: boolean
   }
   onClick: (section: Section) => void
 }
@@ -41,6 +42,14 @@ function MapBar({ activeSection, onClick }: MapBarProps) {
         className={activeSection.resources ? 'bg-blue-100' : ''}
       >
         <CloudMoon className="h-6 w-6" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => onClick('satellite')}
+        className={activeSection.satellite ? 'bg-blue-100' : ''}
+      >
+        <Satellite className="h-6 w-6" />
       </Button>
     </div>
   )

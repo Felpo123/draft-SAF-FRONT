@@ -14,7 +14,7 @@ const Timeline = ({
   handleDateSelect,
 }: TimelineMapBarProps) => {
   return (
-    <div className="absolute top-16 left-4 p-2 " style={{ zIndex: 1000 }}>
+    <div className="absolute top-4 left-4 p-2 " style={{ zIndex: 1000 }}>
       <div className="flex items-center space-x-2 ">
         {dates.map((date, index) => (
           <React.Fragment key={date}>
