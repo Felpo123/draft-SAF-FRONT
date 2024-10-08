@@ -9,6 +9,8 @@ import MapBar from './MapBar'
 import WeatherCard from './WeatherCard'
 import Timeline from './TimelineMapBar'
 import { calculateBoundingBox, calculateBoundingBox2, extractDatesAndIds, Geojson } from '@/lib/mapUtils';
+import { set } from 'zod';
+import { features } from 'process';
 
 
 export type Section = 'infrastructure' | 'graphs' | 'resources';
@@ -25,7 +27,7 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
   const dates = extractDatesAndIds(geoJson).fechasUnicas;
   const [currentIndex, setCurrentIndex] = useState(dates[dates.length - 1]); // Índice de la fecha actual
   const [provincias, setProvincias] = useState([]); // Almacena las provincias disponibles
-  const [selectedProvincia, setSelectedProvincia] = useState(''); // Provincia seleccionada
+  const [selectedProvincia, setSelectedProvincia] = useState('Todo el desastre'); // Provincia seleccionada
   const [superficieTotal, setSuperficieTotal] = useState(0); // Nueva variable para la suma de superf
 
   // Función para extraer fechas y provincias únicas
@@ -111,9 +113,9 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
 
     {
       id: 4,
-      entity: 'Aeropuertos',
-      quantity: 75,
-      icon: '✈️',
+      entity: 'Superfice Afectada (km²)',
+      quantity: superficieTotal,
+      icon: '🌍',
       color: 'bg-yellow-500',
     },
     {
@@ -292,10 +294,14 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
   };
 
 
-  const handleDateChange = (newIndex: string) => {
-    setCurrentIndex(newIndex);
+  const handleDateChange = (newIndex?: string) => {
+    let selectedDate;
 
-    const selectedDate = newIndex;
+    !newIndex ? selectedDate = dates[dates.length - 1] : selectedDate = newIndex;
+
+    setCurrentIndex(selectedDate);
+
+
     const filteredData = {
       ...geoJson,
       features: geoJson.features.filter((feature) =>
@@ -303,6 +309,7 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
         (selectedProvincia === 'Todo el desastre' || feature.properties.nom_pro === selectedProvincia)
       ),
     };
+
 
     // Calcular la suma de la superficie ("superf") para la fecha seleccionada
     const superficieSum = filteredData.features.reduce((sum, feature) => sum + (feature.properties.superf || 0), 0);
@@ -355,6 +362,9 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
       setProvincias(['Todo el desastre', ...extractedData.provinciasUnicas]); // Agregar opción "Todo el desastre"
       setSelectedProvincia('Todo el desastre'); // Seleccionar "Todo el desastre" por defecto
 
+      mapRef.current.on('load', () => {
+        handleDateChange(); // Llamar a handleDateChange una vez que el estilo esté cargado
+      });
     }
 
   }, []);
@@ -376,10 +386,7 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
         </select>
       </div>
 
-      {/* Mostrar la suma de la superficie */}
-      <div>
-        <strong>Superficie total: </strong>{superficieTotal} km²
-      </div>
+
 
       <div
         ref={mapContainer}
