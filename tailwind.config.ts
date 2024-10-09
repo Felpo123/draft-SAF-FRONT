@@ -23,7 +23,7 @@ const config: Config = {
       colors: {},
     },
     screens: {
-      sm: '640px',
+      sm: '1023px',
       md: '1024px',
       lg: '1366px',
       xl: '1920px',    
