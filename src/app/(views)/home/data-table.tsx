@@ -84,7 +84,7 @@ export function DataTable<TData, TValue>({
               className="p-2 hover:bg-gray-200 rounded"
               variant="outline"
               onClick={() => {
-                router.push(`/maplibre?idEvent=${incident.properties.id_evento}`)
+                router.push(`/maplibre?idEvent=${incident.properties.id_evento}&name=${incident.properties.nom_event}`)
               }}
             >
               <LayoutDashboardIcon size={20} />
@@ -128,9 +128,9 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center justify-between py-4 gap-4">
         <Input
           placeholder="Filter names..."
-          value={(table.getColumn('nombre')?.getFilterValue() as string) ?? ''}
+          value={(table.getColumn("properties_nom_event")?.getFilterValue() as string) ?? ''}
           onChange={(event) =>
-            table.getColumn('nombre')?.setFilterValue(event.target.value)
+            table.getColumn("properties_nom_event")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -193,7 +193,7 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center"
                 >
-                  No results.
+                  No resultados.
                 </TableCell>
               </TableRow>
             )}

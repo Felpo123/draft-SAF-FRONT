@@ -18,7 +18,7 @@ const Timeline = ({
       <div className="flex items-center space-x-2 ">
         {dates.map((date, index) => (
           <React.Fragment key={date}>
-            {index > 0 && <div className="h-1 w-12 bg-gray-900 "></div>}
+            {index > 0 && <div className="h-1 w-12 bg-gray-900 -mt-5"></div>}
             <div className="flex flex-col items-center gap-1">
               <button
                 onClick={() => handleDateSelect(date)}

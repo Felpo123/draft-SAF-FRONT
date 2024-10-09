@@ -11,19 +11,19 @@ import Timeline from './TimelineMapBar'
 import { calculateBoundingBox, calculateBoundingBox2, extractDatesAndIds, Geojson } from '@/lib/mapUtils';
 import { set } from 'zod';
 import { features } from 'process';
-import { MapPin } from 'lucide-react';
+import { LayersIcon, MapPin } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 
 export type Section = 'infrastructure' | 'graphs' | 'resources' | 'satellite';
 
 interface LayerisMapLibreProps {
-  incidentId?: string
+  nameEvent?: string
   idEvent?: string
   geoJson: Geojson
 }
 
-const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps) => {
+const LayerisMapLibre = ({ nameEvent, idEvent, geoJson }: LayerisMapLibreProps) => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const dates = extractDatesAndIds(geoJson).fechasUnicas;
@@ -31,6 +31,9 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
   const [provincias, setProvincias] = useState([]); // Almacena las provincias disponibles
   const [selectedProvincia, setSelectedProvincia] = useState('Todo el desastre'); // Provincia seleccionada
   const [superficieTotal, setSuperficieTotal] = useState(0); // Nueva variable para la suma de superf
+  const [layersOpen, setLayersOpen] = useState(false);
+
+  console.log('geoJson:', geoJson);
 
   // Función para extraer fechas y provincias únicas
   const extractDatesAndProvincias = (geojsonData) => {
@@ -367,6 +370,8 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
       setSelectedProvincia('Todo el desastre'); // Seleccionar "Todo el desastre" por defecto
 
       mapRef.current.on('load', () => {
+        mapRef.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+
         handleDateChange(); // Llamar a handleDateChange una vez que el estilo esté cargado
       });
     }
@@ -426,36 +431,35 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
 
       </div>
 
-      {/* Titulo */}
-
-      <div className="absolute top-24 left-4 z-[1000]">
+      <div className='absolute top-24 left-4 z-[1000] flex gap-2'>
+        {/* Titulo */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full shadow-lg">
           <h1 className="text-xl font-bold tracking-wider">
-            Valparaiso <span className="text-yellow-300">{2024}</span>
+            {nameEvent || 'Evento de desastre'}
           </h1>
         </div>
+
+        {/* Selector de provincia */}
+
+        <div className="flex items-center space-x-4 bg-white rounded-full shadow-lg py-1.5 px-4" style={{ zIndex: 1000 }}>
+          <MapPin className="h-5 w-5 text-blue-500" />
+          <Select value={selectedProvincia} onValueChange={handleProvinciaChange}>
+            <SelectTrigger className="w-[170px] border-none shadow-none focus:ring-0 ">
+              <SelectValue placeholder="Selecciona una provincia" />
+            </SelectTrigger>
+            <SelectContent className='z-[1000]'>
+              {provincias.map((province) => (
+                <SelectItem key={province} value={province}>
+                  {province}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+        </div>
+
+
       </div>
-
-      {/* Selector de provincia */}
-
-      <div className="absolute top-24 left-64 flex items-center space-x-4 bg-white rounded-full shadow-lg py-1.5 px-4" style={{ zIndex: 1000 }}>
-        <MapPin className="h-5 w-5 text-blue-500" />
-        <Select value={selectedProvincia} onValueChange={handleProvinciaChange}>
-          <SelectTrigger className="w-[170px] border-none shadow-none focus:ring-0 ">
-            <SelectValue placeholder="Selecciona una provincia" />
-          </SelectTrigger>
-          <SelectContent className='z-[1000]'>
-            {provincias.map((province) => (
-              <SelectItem key={province} value={province}>
-                {province}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-      </div>
-
-
 
       <Timeline dates={dates} selectedDate={currentIndex} handleDateSelect={handleDateChange} />
 
@@ -479,40 +483,31 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
         )
       }
 
-      <div className="control-panel">
-        <summary className="summary">Capas disponibles</summary>
-        <div className="layers-list">
-          {availableLayers.map((layer) => (
-            <div key={layer.id} className="layer-item">
-              <input
-                type="checkbox"
-                checked={activeLayers.includes(layer.id)}
-                onChange={() => handleLayerToggle(layer.id)}
-              />
-              {layer.name}
-            </div>
-          ))}
-        </div>
-
-        {/* Botones de zoom */}
-        <div className="zoom-controls">
-          <button onClick={handleZoomIn} className="zoom-button">
-            Zoom +
-          </button>
-          <button onClick={handleZoomOut} className="zoom-button">
-            Zoom -
-          </button>
-        </div>
-
-        {/* Mostrar nivel de zoom actual */}
-        <div className="zoom-level">
-          Nivel de zoom: {viewState.zoom.toFixed(2)}
-        </div>
-
+      <div className="absolute top-4 right-4 z-10">
+        <button
+          onClick={() => setLayersOpen(!layersOpen)}
+          className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200"
+          aria-label="Toggle layers menu"
+        >
+          <LayersIcon size={24} />
+        </button>
+        {layersOpen && (
+          <div className="absolute top-9 right-0 mt-2 p-4 bg-white rounded shadow-md w-48">
+            <h3 className="font-bold mb-2 text-sm">Capas</h3>
+            {availableLayers.map(layer => (
+              <div key={layer.id} className="flex items-center mb-2">
+                <input
+                  type="checkbox"
+                  id={layer.id}
+                  onChange={() => handleLayerToggle(layer.id)}
+                  className="mr-2"
+                />
+                <label htmlFor={layer.id}>{layer.name}</label>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Satellite Card*/}
-
       {
         activeSection.satellite && (
 
@@ -533,6 +528,8 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
         )
       }
     </div >
+
+
   )
 }
 
