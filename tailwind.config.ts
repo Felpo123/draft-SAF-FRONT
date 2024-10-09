@@ -22,6 +22,12 @@ const config: Config = {
       },
       colors: {},
     },
+    screens: {
+      sm: '640px',
+      md: '1024px',
+      lg: '1366px',
+      xl: '1920px',    
+    }
   },
   plugins: [require('tailwindcss-animate')],
 }

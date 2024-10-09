@@ -15,11 +15,11 @@ async function MapLibrePage({
   searchParams,
 }: {
   searchParams?: {
-    incident?: string
+    name?: string
     idEvent?: string
   }
 }) {
-  const incidentId = searchParams?.incident || '1'
+  const nameEvent = searchParams?.name || ''
 
   const idEvent = searchParams?.idEvent || '01'
 
@@ -32,7 +32,7 @@ async function MapLibrePage({
   return (
     <Suspense key={idEvent} fallback={<LoadingSpinner />}>
       <DynamicMap
-        incidentId={incidentId}
+        nameEvent={nameEvent}
         idEvent={idEvent}
         geoJson={geojsonData}
       />

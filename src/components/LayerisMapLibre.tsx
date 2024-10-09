@@ -9,15 +9,20 @@ import MapBar from './MapBar'
 import WeatherCard from './WeatherCard'
 import Timeline from './TimelineMapBar'
 import { calculateBoundingBox, calculateBoundingBox2, extractDatesAndIds, Geojson } from '@/lib/mapUtils';
+import { set } from 'zod';
+import { features } from 'process';
+import { LayersIcon, MapPin } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+
 import RulerControl from '@mapbox-controls/ruler';
 import '@mapbox-controls/ruler/src/index.css';
 import '@mapbox-controls/compass/src/index.css';
 import * as turf from '@turf/turf';
 
-export type Section = 'infrastructure' | 'graphs' | 'resources';
+export type Section = 'infrastructure' | 'graphs' | 'resources' | 'satellite';
 
 interface LayerisMapLibreProps {
-  incidentId?: string
+  nameEvent?: string
   idEvent?: string
   geoJson: Geojson
 }
@@ -25,7 +30,7 @@ export type ControlOptions = {
   instant?: false;
 };
 
-const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps) => {
+const LayerisMapLibre = ({ nameEvent, idEvent, geoJson }: LayerisMapLibreProps) => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const dates = extractDatesAndIds(geoJson).fechasUnicas;
@@ -33,6 +38,9 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
   const [provincias, setProvincias] = useState([]); // Almacena las provincias disponibles
   const [selectedProvincia, setSelectedProvincia] = useState('Todo el desastre'); // Provincia seleccionada
   const [superficieTotal, setSuperficieTotal] = useState(0); // Nueva variable para la suma de superf
+  const [layersOpen, setLayersOpen] = useState(false);
+
+  console.log('geoJson:', geoJson);
 
   // Función para extraer fechas y provincias únicas
   const extractDatesAndProvincias = (geojsonData) => {
@@ -63,7 +71,8 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
   };
 
   const handleProvinciaChange = (event) => {
-    const provincia = event.target.value;
+    console.log('Provincia seleccionada:', event);
+    const provincia = event;
     setSelectedProvincia(provincia);
 
     // Filtrar datos solo si no se ha seleccionado "Todo el desastre"
@@ -94,6 +103,7 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
     infrastructure: true,
     graphs: true,
     resources: true,
+    satellite: true,
   })
 
   const toggleSection = (section: Section) => {
@@ -410,6 +420,8 @@ const getCentroidAndBBox = (geojson: any) => {
       setSelectedProvincia('Todo el desastre'); // Seleccionar "Todo el desastre" por defecto
 
       mapRef.current.on('load', () => {
+        mapRef.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+
 
           // Añadir fuente de terreno
           mapRef.current.addSource('terrain-source', {
@@ -485,22 +497,40 @@ const getCentroidAndBBox = (geojson: any) => {
   return (
     <div className='h-[100vh] w-full relative'>
 
-      {/* Selector de provincia */}
-      <div className='provincias z-[1000]'>
-        <label htmlFor="provinciaSelect">Filtrar por Provincia:</label>
-        <select id="provinciaSelect" value={selectedProvincia} onChange={handleProvinciaChange}>
-          {provincias.map((provincia) => (
-            <option key={provincia} value={provincia}>
-              {provincia}
-            </option>
-          ))}
-        </select>
-      </div>
-
       <div
         ref={mapContainer}
         style={{ width: '100%', height: '100vh' }}
       >
+
+      </div>
+
+      <div className='absolute top-24 left-4 z-[1000] flex gap-2'>
+        {/* Titulo */}
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full shadow-lg">
+          <h1 className="text-xl font-bold tracking-wider">
+            {nameEvent || 'Evento de desastre'}
+          </h1>
+        </div>
+
+        {/* Selector de provincia */}
+
+        <div className="flex items-center space-x-4 bg-white rounded-full shadow-lg py-1.5 px-4" style={{ zIndex: 1000 }}>
+          <MapPin className="h-5 w-5 text-blue-500" />
+          <Select value={selectedProvincia} onValueChange={handleProvinciaChange}>
+            <SelectTrigger className="w-[170px] border-none shadow-none focus:ring-0 ">
+              <SelectValue placeholder="Selecciona una provincia" />
+            </SelectTrigger>
+            <SelectContent className='z-[1000]'>
+              {provincias.map((province) => (
+                <SelectItem key={province} value={province}>
+                  {province}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+        </div>
+
 
       </div>
 
@@ -526,37 +556,53 @@ const getCentroidAndBBox = (geojson: any) => {
         )
       }
 
-      <div className="control-panel">
-        <summary className="summary">Capas disponibles</summary>
-        <div className="layers-list">
-          {availableLayers.map((layer) => (
-            <div key={layer.id} className="layer-item">
-              <input
-                type="checkbox"
-                checked={activeLayers.includes(layer.id)}
-                onChange={() => handleLayerToggle(layer.id)}
-              />
-              {layer.name}
-            </div>
-          ))}
-        </div>
-
-        {/* Botones de zoom */}
-        <div className="zoom-controls">
-          <button onClick={handleZoomIn} className="zoom-button">
-            Zoom +
-          </button>
-          <button onClick={handleZoomOut} className="zoom-button">
-            Zoom -
-          </button>
-        </div>
-
-        {/* Mostrar nivel de zoom actual */}
-        <div className="zoom-level">
-          Nivel de zoom: {viewState.zoom.toFixed(2)}
-        </div>
+      <div className="absolute top-4 right-4 z-10">
+        <button
+          onClick={() => setLayersOpen(!layersOpen)}
+          className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200"
+          aria-label="Toggle layers menu"
+        >
+          <LayersIcon size={24} />
+        </button>
+        {layersOpen && (
+          <div className="absolute top-9 right-0 mt-2 p-4 bg-white rounded shadow-md w-48">
+            <h3 className="font-bold mb-2 text-sm">Capas</h3>
+            {availableLayers.map(layer => (
+              <div key={layer.id} className="flex items-center mb-2">
+                <input
+                  type="checkbox"
+                  id={layer.id}
+                  onChange={() => handleLayerToggle(layer.id)}
+                  className="mr-2"
+                />
+                <label htmlFor={layer.id}>{layer.name}</label>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+      {
+        activeSection.satellite && (
+
+          <div className="absolute  bottom-4 left-4 space-x-4 flex">
+
+            <div
+              className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm w-full max-w-sm"
+            >
+              <div>
+                <p className="text-sm font-medium text-gray-900">MODIS</p>
+                <p className="text-2xl font-bold text-gray-900">2:48:21</p>
+              </div>
+
+              <div className={`p-2 rounded-full text-2xl `}>📡</div>
+            </div>
+
+          </div>
+        )
+      }
     </div >
+
+
   )
 }
 
