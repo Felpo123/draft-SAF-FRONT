@@ -26,7 +26,7 @@ async function MapLibrePage({
   const geojsonData = await fetchIncidentGEOJSON(idEvent)
 
   if (!geojsonData) {
-    return notFound();
+    return notFound()
   }
 
   return (

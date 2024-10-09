@@ -1,6 +1,6 @@
 'use client'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import maplibregl, { GeoJSONSource, Map } from 'maplibre-gl';
+import maplibregl, { GeoJSONSource, Map } from 'maplibre-gl'
 import { Source, Layer, Popup, ScaleControl } from 'react-map-gl/maplibre'
 import React, { useEffect, useRef, useState } from 'react'
 import InfraestructureCard from './InfraestructureCard'
@@ -8,18 +8,33 @@ import GraphsCard from './GraphsCard'
 import MapBar from './MapBar'
 import WeatherCard from './WeatherCard'
 import Timeline from './TimelineMapBar'
-import { calculateBoundingBox, calculateBoundingBox2, extractDatesAndIds, Geojson } from '@/lib/mapUtils';
-import { set } from 'zod';
-import { features } from 'process';
-import { LayersIcon, MapPin } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import {
+  calculateBoundingBox,
+  calculateBoundingBox2,
+  expandBBox,
+  extractDatesAndIds,
+  extractDatesAndProvincias,
+  Geojson,
+  getCentroidAndBBox,
+  weatherInfo,
+} from '@/lib/mapUtils'
+import { set } from 'zod'
+import { features } from 'process'
+import { LayersIcon, MapPin } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select'
 
-import RulerControl from '@mapbox-controls/ruler';
-import '@mapbox-controls/ruler/src/index.css';
-import '@mapbox-controls/compass/src/index.css';
-import * as turf from '@turf/turf';
+import RulerControl from '@mapbox-controls/ruler'
+import '@mapbox-controls/ruler/src/index.css'
+import '@mapbox-controls/compass/src/index.css'
+import * as turf from '@turf/turf'
 
-export type Section = 'infrastructure' | 'graphs' | 'resources' | 'satellite';
+export type Section = 'infrastructure' | 'graphs' | 'resources' | 'satellite'
 
 interface LayerisMapLibreProps {
   nameEvent?: string
@@ -27,77 +42,44 @@ interface LayerisMapLibreProps {
   geoJson: Geojson
 }
 export type ControlOptions = {
-  instant?: false;
-};
+  instant?: false
+}
 
-const LayerisMapLibre = ({ nameEvent, idEvent, geoJson }: LayerisMapLibreProps) => {
-  const mapContainer = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<Map | null>(null);
-  const dates = extractDatesAndIds(geoJson).fechasUnicas;
-  const [currentIndex, setCurrentIndex] = useState(dates[dates.length - 1]); // Índice de la fecha actual
-  const [provincias, setProvincias] = useState([]); // Almacena las provincias disponibles
-  const [selectedProvincia, setSelectedProvincia] = useState('Todo el desastre'); // Provincia seleccionada
-  const [superficieTotal, setSuperficieTotal] = useState(0); // Nueva variable para la suma de superf
-  const [layersOpen, setLayersOpen] = useState(false);
-
-  console.log('geoJson:', geoJson);
-
-  // Función para extraer fechas y provincias únicas
-  const extractDatesAndProvincias = (geojsonData) => {
-    const fechasUnicas = [];
-    const provinciasUnicas = new Set();
-
-    const terrainControl = new maplibregl.TerrainControl({
-      source: 'terrain-source',
-      exaggeration: 1.5 // Factor de exageración para el relieve
-  });
-    geojsonData.features.forEach((feature) => {
-      const fecha = feature.properties.date;
-      const provincia = feature.properties.nom_pro; // Utilizamos nom_pro para la provincia
-
-      if (fecha && !fechasUnicas.includes(fecha)) {
-        fechasUnicas.push(fecha);
-      }
-
-      if (provincia) {
-        provinciasUnicas.add(provincia);
-      }
-    });
-
-    // Ordenar las fechas en orden descendente (más reciente primero)
-    fechasUnicas.sort((a, b) => new Date(b) - new Date(a));
-
-    return { fechasUnicas, provinciasUnicas: Array.from(provinciasUnicas) };
-  };
+const LayerisMapLibre = ({
+  nameEvent,
+  idEvent,
+  geoJson,
+}: LayerisMapLibreProps) => {
+  const mapContainer = useRef<HTMLDivElement | null>(null)
+  const mapRef = useRef<Map | null>(null)
+  const dates = extractDatesAndIds(geoJson).fechasUnicas
+  const [currentIndex, setCurrentIndex] = useState(dates[dates.length - 1]) // Índice de la fecha actual
+  const [provincias, setProvincias] = useState([]) // Almacena las provincias disponibles
+  const [selectedProvincia, setSelectedProvincia] = useState('Todo el desastre') // Provincia seleccionada
+  const [superficieTotal, setSuperficieTotal] = useState(0) // Nueva variable para la suma de superf
+  const [layersOpen, setLayersOpen] = useState(false)
+  const [activeLayers, setActiveLayers] = useState<string[]>([])
 
   const handleProvinciaChange = (event) => {
-    console.log('Provincia seleccionada:', event);
-    const provincia = event;
-    setSelectedProvincia(provincia);
+    const provincia = event
+    setSelectedProvincia(provincia)
 
     // Filtrar datos solo si no se ha seleccionado "Todo el desastre"
     if (provincia === 'Todo el desastre') {
-      updateMapWithGeojson(geoJson); // Mostrar todos los datos
+      updateMapWithGeojson(geoJson) // Mostrar todos los datos
     } else {
       // Filtrar datos por la provincia seleccionada
       const filteredData = {
         ...geoJson,
-        features: geoJson.features.filter((feature) => feature.properties.nom_pro === provincia),
-      };
+        features: geoJson.features.filter(
+          (feature) => feature.properties.nom_pro === provincia,
+        ),
+      }
 
       // Actualizar el mapa con los datos filtrados
-      updateMapWithGeojson(filteredData);
+      updateMapWithGeojson(filteredData)
     }
-  };
-
-
-  const [viewState, setViewState] = useState({
-    latitude: -38.747434,
-    longitude: -72.605348,
-    zoom: 10,
-  })
-
-  const [popupInfo, setPopupInfo] = useState(null)
+  }
 
   const [activeSection, setActiveSection] = useState({
     infrastructure: true,
@@ -173,21 +155,6 @@ const LayerisMapLibre = ({ nameEvent, idEvent, geoJson }: LayerisMapLibreProps) 
     },
   ]
 
-  const weatherInfo = [
-    {
-      id: 1, tempeture: 15, day: 'Lun', icon: "🌤️"
-    },
-    {
-      id: 2, tempeture: 20, day: 'Mar', icon: "☀️"
-    },
-    {
-      id: 3, tempeture: 9, day: 'Mie', icon: "🌧️"
-    },
-    {
-      id: 4, tempeture: 8, day: 'Jue', icon: "☁️"
-    },
-  ]
-
   const availableLayers = [
     {
       id: 'antenas',
@@ -212,68 +179,23 @@ const LayerisMapLibre = ({ nameEvent, idEvent, geoJson }: LayerisMapLibreProps) 
     { id: 'redvial', name: 'Red Vial', url: 'desafio:redvial', style: '' },
   ]
 
-  const [activeLayers, setActiveLayers] = useState<string[]>([])
-
   const handleLayerToggle = (layerId: string) => {
     setActiveLayers((current) =>
       current.includes(layerId)
         ? current.filter((id) => id !== layerId)
-        : [...current, layerId]
-    );
-  };
-
-  const handleZoomIn = () => {
-    setViewState((prevState) => ({
-      ...prevState,
-      zoom: Math.min(prevState.zoom + 1, 20), // Limitar zoom máximo a 20
-    }))
+        : [...current, layerId],
+    )
   }
-
-  const handleZoomOut = () => {
-    setViewState((prevState) => ({
-      ...prevState,
-      zoom: Math.max(prevState.zoom - 1, 1), // Limitar zoom mínimo a 1
-    }))
-  }
-
-  // Crear los datos GeoJSON para el círculo
-  const circleCenter = [-72.605348, -38.747434] // Centro del círculo
-  const circleRadius = 10 // Radio en km
-
-  // Calcular el bounding box del círculo
-  const bbox = calculateBoundingBox(
-    circleCenter[0],
-    circleCenter[1],
-    circleRadius,
-  )
-
-  // Calcular el bounding box del círculo
-  const bboxToWMS = calculateBoundingBox2(
-    circleCenter[0],
-    circleCenter[1],
-    circleRadius,
-  )
-
-  const circleLayer = {
-    id: 'circle-layer',
-    type: 'fill',
-    source: 'circle',
-    paint: {
-      'fill-color': '#007cbf',
-      'fill-opacity': 0.3,
-    },
-  }
-
 
   const updateMapWithGeojson = (geojsonData: Geojson) => {
     if (mapRef.current) {
-      const map = mapRef.current;
+      const map = mapRef.current
 
       if (!map.getSource('geojson-source')) {
         map.addSource('geojson-source', {
           type: 'geojson',
           data: geojsonData,
-        });
+        })
 
         map.addLayer({
           id: 'polygons-layer',
@@ -283,7 +205,7 @@ const LayerisMapLibre = ({ nameEvent, idEvent, geoJson }: LayerisMapLibreProps) 
             'fill-color': '#007cbf',
             'fill-opacity': 0.6,
           },
-        });
+        })
 
         map.addLayer({
           id: 'polygon-borders',
@@ -293,93 +215,56 @@ const LayerisMapLibre = ({ nameEvent, idEvent, geoJson }: LayerisMapLibreProps) 
             'line-color': '#ffffff',
             'line-width': 2,
           },
-        });
+        })
       } else {
-        const source = map.getSource('geojson-source');
+        const source = map.getSource('geojson-source')
         if (source && (source as GeoJSONSource).setData) {
-          (source as GeoJSONSource).setData(geojsonData);
+          ; (source as GeoJSONSource).setData(geojsonData)
         }
       }
     }
-  };
-  // Función para expandir el BBOX con un margen
-const expandBBox = (bbox: [number, number, number, number], marginFactor: number): [number, number, number, number] => {
-  const [minLon, minLat, maxLon, maxLat] = bbox;
-
-  // Expande la latitud y longitud en ambos extremos
-  const latMargin = (maxLat - minLat) * marginFactor;
-  const lonMargin = (maxLon - minLon) * marginFactor;
-
-  return [
-    minLon - lonMargin, // Extiende el límite de longitud mínima
-    minLat - latMargin, // Extiende el límite de latitud mínima
-    maxLon + lonMargin, // Extiende el límite de longitud máxima
-    maxLat + latMargin  // Extiende el límite de latitud máxima
-  ];
-};
-
-// Función para asegurarse de que las coordenadas tienen exactamente dos elementos
-const ensureLngLat = (coords: number[]): [number, number] => {
-  if (coords.length >= 2) {
-    return [coords[0], coords[1]]; // Solo tomamos los dos primeros elementos: [longitude, latitude]
-  } else {
-    throw new Error("Las coordenadas no son válidas. Se esperaban al menos longitud y latitud.");
   }
-};
-
-// Obtener el centroide y la BBOX
-const getCentroidAndBBox = (geojson: any) => {
-  // Calcula el centroide usando Turf.js
-  const centroid = turf.centroid(geojson);
-
-  // Coordenadas del centroide (asegúrate de que sean un array de [lon, lat])
-  const centroidCoords: [number, number] = centroid.geometry.coordinates as [number, number];
-
-  // Calcula el BBOX (Bounding Box) usando Turf.js
-  let bbox = turf.bbox(geojson); // [minLon, minLat, maxLon, maxLat]
-
-  // Expandir el BBOX con un margen adicional (por ejemplo, un 10%)
-  bbox = expandBBox(bbox, 0.1); // 0.1 significa expandir en un 10%
-
-  return { centroid: centroidCoords, bbox };
-};
-  
 
   const handleDateChange = (newIndex?: string) => {
-    let selectedDate;
+    let selectedDate
 
-    !newIndex ? selectedDate = dates[dates.length - 1] : selectedDate = newIndex;
+    !newIndex
+      ? (selectedDate = dates[dates.length - 1])
+      : (selectedDate = newIndex)
 
-    setCurrentIndex(selectedDate);
-
+    setCurrentIndex(selectedDate)
 
     const filteredData = {
       ...geoJson,
-      features: geoJson.features.filter((feature) =>
-        new Date(feature.properties.date).toISOString().slice(0, 10) === new Date(selectedDate).toISOString().slice(0, 10) &&
-        (selectedProvincia === 'Todo el desastre' || feature.properties.nom_pro === selectedProvincia)
+      features: geoJson.features.filter(
+        (feature) =>
+          new Date(feature.properties.date).toISOString().slice(0, 10) ===
+          new Date(selectedDate).toISOString().slice(0, 10) &&
+          (selectedProvincia === 'Todo el desastre' ||
+            feature.properties.nom_pro === selectedProvincia),
       ),
-    };
-
+    }
 
     // Calcular la suma de la superficie ("superf") para la fecha seleccionada
-    const superficieSum = filteredData.features.reduce((sum, feature) => sum + (feature.properties.superf || 0), 0);
-    setSuperficieTotal(superficieSum); // Actualizar el estado con la suma de superficies
+    const superficieSum = filteredData.features.reduce(
+      (sum, feature) => sum + (feature.properties.superf || 0),
+      0,
+    )
+    setSuperficieTotal(superficieSum) // Actualizar el estado con la suma de superficies
 
     // Si hay un polígono coincidente, centrar el mapa en su centroide
-    const matchingFeature = filteredData.features[0]; // Obtener el primer polígono correspondiente a la fecha
+    const matchingFeature = filteredData.features[0] // Obtener el primer polígono correspondiente a la fecha
 
     if (matchingFeature) {
-      const centroid= getCentroidAndBBox(geoJson).centroid;
-      const prueba2= getCentroidAndBBox(geoJson).bbox;
-      console.log(prueba2);
+      const centroid = getCentroidAndBBox(geoJson).centroid
+      const prueba2 = getCentroidAndBBox(geoJson).bbox
+      console.log(prueba2)
       if (mapRef.current) {
-        mapRef.current.flyTo({ center: centroid, zoom: 10 });
+        mapRef.current.flyTo({ center: centroid, zoom: 10 })
       }
     }
 
-    updateMapWithGeojson(filteredData);
-
+    updateMapWithGeojson(filteredData)
   }
 
   useEffect(() => {
@@ -391,9 +276,7 @@ const getCentroidAndBBox = (geojson: any) => {
           sources: {
             osm: {
               type: 'raster',
-              tiles: [
-                'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-              ],
+              tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
               tileSize: 256,
             },
           },
@@ -407,49 +290,53 @@ const getCentroidAndBBox = (geojson: any) => {
             },
           ],
         },
-        center: [viewState.longitude, viewState.latitude],
+        center: [-72.605348, -38.747434],
         zoom: 10,
-      });
-      
-      mapRef.current.addControl(new RulerControl, 'bottom-right');
-      mapRef.current.on('ruler.on', () => console.log('Ruler activated'));
-      mapRef.current.on('ruler.off', () => console.log('Ruler deactivated'));
-      mapRef.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-      const extractedData = extractDatesAndProvincias(geoJson);
-      setProvincias(['Todo el desastre', ...extractedData.provinciasUnicas]); // Agregar opción "Todo el desastre"
-      setSelectedProvincia('Todo el desastre'); // Seleccionar "Todo el desastre" por defecto
+      })
+
+      mapRef.current.addControl(new RulerControl(), 'bottom-right')
+      mapRef.current.on('ruler.on', () => console.log('Ruler activated'))
+      mapRef.current.on('ruler.off', () => console.log('Ruler deactivated'))
+      mapRef.current.addControl(
+        new maplibregl.NavigationControl(),
+        'bottom-right',
+      )
+      const extractedData = extractDatesAndProvincias(geoJson)
+      setProvincias(['Todo el desastre', ...extractedData.provinciasUnicas]) // Agregar opción "Todo el desastre"
+      setSelectedProvincia('Todo el desastre') // Seleccionar "Todo el desastre" por defecto
 
       mapRef.current.on('load', () => {
-        mapRef.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+        mapRef.current.addControl(
+          new maplibregl.NavigationControl(),
+          'bottom-right',
+        )
 
-
-          // Añadir fuente de terreno
-          mapRef.current.addSource('terrain-source', {
-            'type': 'raster-dem',
-            'url': 'geoserver/desafio/wms?service=WMS&request=GetMap&layers=desafio:elevacion&styles=&format=image/png&transparent=true&version=1.1.1&srs=EPSG:4326&bbox={bbox-epsg-4326}&width=256&height=256', // URL de MapTiler para DEM
-            'tileSize': 256
-        });
+        // Añadir fuente de terreno
+        mapRef.current.addSource('terrain-source', {
+          type: 'raster-dem',
+          url: 'geoserver/desafio/wms?service=WMS&request=GetMap&layers=desafio:elevacion&styles=&format=image/png&transparent=true&version=1.1.1&srs=EPSG:4326&bbox={bbox-epsg-4326}&width=256&height=256', // URL de MapTiler para DEM
+          tileSize: 256,
+        })
 
         // Configurar el TerrainControl
         const terrainControl = new maplibregl.TerrainControl({
-            source: 'terrain-source',
-            exaggeration: 1.5 // Factor de exageración para el relieve
-        });
+          source: 'terrain-source',
+          exaggeration: 1.5, // Factor de exageración para el relieve
+        })
 
         // Añadir el TerrainControl al mapa
-        mapRef.current.addControl(terrainControl);
+        mapRef.current.addControl(terrainControl)
 
         // Establecer el terreno en el mapa
         mapRef.current.setTerrain({
-            'source': 'terrain-source',
-            'exaggeration': 1.5
-        });
+          source: 'terrain-source',
+          exaggeration: 1.5,
+        })
 
-        handleDateChange(); // Llamar a handleDateChange una vez que el estilo esté cargado
-      });
+        handleDateChange() // Llamar a handleDateChange una vez que el estilo esté cargado
+      })
     }
-
-  }, []);
+  }, [])
 
   useEffect(() => {
     if (mapRef.current) {
@@ -457,19 +344,21 @@ const getCentroidAndBBox = (geojson: any) => {
       availableLayers.forEach((layer) => {
         if (!activeLayers.includes(layer.id)) {
           if (mapRef.current.getLayer(layer.id)) {
-            mapRef.current.removeLayer(layer.id);
+            mapRef.current.removeLayer(layer.id)
           }
           if (mapRef.current.getSource(layer.id)) {
-            mapRef.current.removeSource(layer.id);
+            mapRef.current.removeSource(layer.id)
           }
         }
-      });
+      })
 
       // Agregar las nuevas capas activas
       availableLayers
         .filter((layer) => activeLayers.includes(layer.id))
         .forEach((layer) => {
-          const bboxToWMS = [/* valores del bounding box (bbox) */];
+          const bboxToWMS = [
+            /* valores del bounding box (bbox) */
+          ]
 
           // Verificar si la capa ya está agregada antes de añadirla
           if (!mapRef.current.getSource(layer.id)) {
@@ -481,30 +370,24 @@ const getCentroidAndBBox = (geojson: any) => {
               ],
               tileSize: 256,
               bounds: getCentroidAndBBox(geoJson).bbox, // Limitar la visualización usando el bounding box
-            });
+            })
 
             // Añadir la capa raster
             mapRef.current.addLayer({
               id: layer.id,
               type: 'raster',
               source: layer.id,
-            });
+            })
           }
-        });
+        })
     }
-  }, [activeLayers, availableLayers, bbox]);
+  }, [activeLayers, availableLayers])
 
   return (
-    <div className='h-[100vh] w-full relative'>
+    <div className="h-[100vh] w-full relative">
+      <div ref={mapContainer} style={{ width: '100%', height: '100vh' }}></div>
 
-      <div
-        ref={mapContainer}
-        style={{ width: '100%', height: '100vh' }}
-      >
-
-      </div>
-
-      <div className='absolute top-24 left-4 z-[1000] flex gap-2'>
+      <div className="absolute top-24 left-4 z-[1000] flex gap-2">
         {/* Titulo */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full shadow-lg">
           <h1 className="text-xl font-bold tracking-wider">
@@ -514,13 +397,19 @@ const getCentroidAndBBox = (geojson: any) => {
 
         {/* Selector de provincia */}
 
-        <div className="flex items-center space-x-4 bg-white rounded-full shadow-lg py-1.5 px-4" style={{ zIndex: 1000 }}>
+        <div
+          className="flex items-center space-x-4 bg-white rounded-full shadow-lg py-1.5 px-4"
+          style={{ zIndex: 1000 }}
+        >
           <MapPin className="h-5 w-5 text-blue-500" />
-          <Select value={selectedProvincia} onValueChange={handleProvinciaChange}>
+          <Select
+            value={selectedProvincia}
+            onValueChange={handleProvinciaChange}
+          >
             <SelectTrigger className="w-[170px] border-none shadow-none focus:ring-0 ">
               <SelectValue placeholder="Selecciona una provincia" />
             </SelectTrigger>
-            <SelectContent className='z-[1000]'>
+            <SelectContent className="z-[1000]">
               {provincias.map((province) => (
                 <SelectItem key={province} value={province}>
                   {province}
@@ -528,33 +417,24 @@ const getCentroidAndBBox = (geojson: any) => {
               ))}
             </SelectContent>
           </Select>
-
         </div>
-
-
       </div>
 
-      <Timeline dates={dates} selectedDate={currentIndex} handleDateSelect={handleDateChange} />
+      <Timeline
+        dates={dates}
+        selectedDate={currentIndex}
+        handleDateSelect={handleDateChange}
+      />
 
       <MapBar activeSection={activeSection} onClick={toggleSection} />
 
-      {
-        activeSection.infrastructure && (
-          <InfraestructureCard infraestructureData={InfrastructureData} />
-        )
-      }
+      {activeSection.infrastructure && (
+        <InfraestructureCard infraestructureData={InfrastructureData} />
+      )}
 
-      {
-        activeSection.graphs && (
-          <GraphsCard />
-        )
-      }
+      {activeSection.graphs && <GraphsCard />}
 
-      {
-        activeSection.resources && (
-          <WeatherCard weatherInfo={weatherInfo} />
-        )
-      }
+      {activeSection.resources && <WeatherCard weatherInfo={weatherInfo} />}
 
       <div className="absolute top-4 right-4 z-10">
         <button
@@ -567,7 +447,7 @@ const getCentroidAndBBox = (geojson: any) => {
         {layersOpen && (
           <div className="absolute top-9 right-0 mt-2 p-4 bg-white rounded shadow-md w-48">
             <h3 className="font-bold mb-2 text-sm">Capas</h3>
-            {availableLayers.map(layer => (
+            {availableLayers.map((layer) => (
               <div key={layer.id} className="flex items-center mb-2">
                 <input
                   type="checkbox"
@@ -581,28 +461,19 @@ const getCentroidAndBBox = (geojson: any) => {
           </div>
         )}
       </div>
-      {
-        activeSection.satellite && (
-
-          <div className="absolute  bottom-4 left-4 space-x-4 flex">
-
-            <div
-              className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm w-full max-w-sm"
-            >
-              <div>
-                <p className="text-sm font-medium text-gray-900">MODIS</p>
-                <p className="text-2xl font-bold text-gray-900">2:48:21</p>
-              </div>
-
-              <div className={`p-2 rounded-full text-2xl `}>📡</div>
+      {activeSection.satellite && (
+        <div className="absolute  bottom-4 left-4 space-x-4 flex">
+          <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm w-full max-w-sm">
+            <div>
+              <p className="text-sm font-medium text-gray-900">MODIS</p>
+              <p className="text-2xl font-bold text-gray-900">2:48:21</p>
             </div>
 
+            <div className={`p-2 rounded-full text-2xl `}>📡</div>
           </div>
-        )
-      }
-    </div >
-
-
+        </div>
+      )}
+    </div>
   )
 }
 

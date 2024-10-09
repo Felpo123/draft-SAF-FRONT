@@ -26,8 +26,8 @@ const config: Config = {
       sm: '1023px',
       md: '1024px',
       lg: '1366px',
-      xl: '1920px',    
-    }
+      xl: '1920px',
+    },
   },
   plugins: [require('tailwindcss-animate')],
 }

@@ -135,8 +135,7 @@ export default function MapDashboard() {
           className="px-4 py-2 text-sm font-semibold bg-white rounded-full shadow-md"
           variant="ghost"
         >
-          <p className='text-sm lg:text-xl xl:text-9xl'>
-
+          <p className="text-sm lg:text-xl xl:text-9xl">
             {isCardsVisible ? 'Ocultar Detalles' : 'Mostrar Detalles'}
           </p>
           {isCardsVisible ? (

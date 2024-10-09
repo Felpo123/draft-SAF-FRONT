@@ -73,7 +73,9 @@ export function DataTable<TData, TValue>({
               className="p-2 hover:bg-gray-200 rounded"
               variant="outline"
               onClick={() => {
-                router.push(`/incidente?action=edit&incident=${incident.properties.id}`)
+                router.push(
+                  `/incidente?action=edit&incident=${incident.properties.id}`,
+                )
               }}
             >
               <Edit3 size={20} />
@@ -84,7 +86,9 @@ export function DataTable<TData, TValue>({
               className="p-2 hover:bg-gray-200 rounded"
               variant="outline"
               onClick={() => {
-                router.push(`/maplibre?idEvent=${incident.properties.id_evento}&name=${incident.properties.nom_event}`)
+                router.push(
+                  `/maplibre?idEvent=${incident.properties.id_evento}&name=${incident.properties.nom_event}`,
+                )
               }}
             >
               <LayoutDashboardIcon size={20} />
@@ -128,9 +132,15 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center justify-between py-4 gap-4">
         <Input
           placeholder="Filter names..."
-          value={(table.getColumn("properties_nom_event")?.getFilterValue() as string) ?? ''}
+          value={
+            (table
+              .getColumn('properties_nom_event')
+              ?.getFilterValue() as string) ?? ''
+          }
           onChange={(event) =>
-            table.getColumn("properties_nom_event")?.setFilterValue(event.target.value)
+            table
+              .getColumn('properties_nom_event')
+              ?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -156,9 +166,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableHead>
                   )
                 })}
@@ -171,8 +181,9 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className={`${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                    } hover:bg-gray-100 transition-colors`}
+                  className={`${
+                    rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                  } hover:bg-gray-100 transition-colors`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell

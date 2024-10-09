@@ -22,10 +22,11 @@ const Timeline = ({
             <div className="flex flex-col items-center gap-1">
               <button
                 onClick={() => handleDateSelect(date)}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${selectedDate === date
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                  }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
+                  selectedDate === date
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                }`}
               >
                 {index + 1}
               </button>
