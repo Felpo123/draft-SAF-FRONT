@@ -226,11 +226,9 @@ const LayerisMapLibre = ({
   }
 
   const handleDateChange = (newIndex?: string) => {
-    let selectedDate
+    let selectedDate;
 
-    !newIndex
-      ? (selectedDate = dates[dates.length - 1])
-      : (selectedDate = newIndex)
+    !newIndex ? (selectedDate = dates[dates.length - 1]) : (selectedDate = newIndex)
 
     setCurrentIndex(selectedDate)
 
@@ -454,6 +452,7 @@ const LayerisMapLibre = ({
                   id={layer.id}
                   onChange={() => handleLayerToggle(layer.id)}
                   className="mr-2"
+                  checked={activeLayers.includes(layer.id)}
                 />
                 <label htmlFor={layer.id}>{layer.name}</label>
               </div>
