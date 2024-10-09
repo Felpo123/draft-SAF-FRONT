@@ -9,9 +9,10 @@ import MapBar from './MapBar'
 import WeatherCard from './WeatherCard'
 import Timeline from './TimelineMapBar'
 import { calculateBoundingBox, calculateBoundingBox2, extractDatesAndIds, Geojson } from '@/lib/mapUtils';
-import { set } from 'zod';
-import { features } from 'process';
-
+import RulerControl from '@mapbox-controls/ruler';
+import '@mapbox-controls/ruler/src/index.css';
+import '@mapbox-controls/compass/src/index.css';
+import * as turf from '@turf/turf';
 
 export type Section = 'infrastructure' | 'graphs' | 'resources';
 
@@ -20,6 +21,9 @@ interface LayerisMapLibreProps {
   idEvent?: string
   geoJson: Geojson
 }
+export type ControlOptions = {
+  instant?: false;
+};
 
 const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps) => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
@@ -35,6 +39,10 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
     const fechasUnicas = [];
     const provinciasUnicas = new Set();
 
+    const terrainControl = new maplibregl.TerrainControl({
+      source: 'terrain-source',
+      exaggeration: 1.5 // Factor de exageración para el relieve
+  });
     geojsonData.features.forEach((feature) => {
       const fecha = feature.properties.date;
       const provincia = feature.properties.nom_pro; // Utilizamos nom_pro para la provincia
@@ -284,15 +292,48 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
       }
     }
   };
+  // Función para expandir el BBOX con un margen
+const expandBBox = (bbox: [number, number, number, number], marginFactor: number): [number, number, number, number] => {
+  const [minLon, minLat, maxLon, maxLat] = bbox;
 
-  const getCentroid = (coordinates: any): [number, number] => {
-    const flatCoords = coordinates.flat(2);
-    const lonSum = flatCoords.reduce((sum: number, coord: [number, number]) => sum + coord[0], 0);
-    const latSum = flatCoords.reduce((sum: number, coord: [number, number]) => sum + coord[1], 0);
-    const len = flatCoords.length;
-    return [lonSum / len, latSum / len];
-  };
+  // Expande la latitud y longitud en ambos extremos
+  const latMargin = (maxLat - minLat) * marginFactor;
+  const lonMargin = (maxLon - minLon) * marginFactor;
 
+  return [
+    minLon - lonMargin, // Extiende el límite de longitud mínima
+    minLat - latMargin, // Extiende el límite de latitud mínima
+    maxLon + lonMargin, // Extiende el límite de longitud máxima
+    maxLat + latMargin  // Extiende el límite de latitud máxima
+  ];
+};
+
+// Función para asegurarse de que las coordenadas tienen exactamente dos elementos
+const ensureLngLat = (coords: number[]): [number, number] => {
+  if (coords.length >= 2) {
+    return [coords[0], coords[1]]; // Solo tomamos los dos primeros elementos: [longitude, latitude]
+  } else {
+    throw new Error("Las coordenadas no son válidas. Se esperaban al menos longitud y latitud.");
+  }
+};
+
+// Obtener el centroide y la BBOX
+const getCentroidAndBBox = (geojson: any) => {
+  // Calcula el centroide usando Turf.js
+  const centroid = turf.centroid(geojson);
+
+  // Coordenadas del centroide (asegúrate de que sean un array de [lon, lat])
+  const centroidCoords: [number, number] = centroid.geometry.coordinates as [number, number];
+
+  // Calcula el BBOX (Bounding Box) usando Turf.js
+  let bbox = turf.bbox(geojson); // [minLon, minLat, maxLon, maxLat]
+
+  // Expandir el BBOX con un margen adicional (por ejemplo, un 10%)
+  bbox = expandBBox(bbox, 0.1); // 0.1 significa expandir en un 10%
+
+  return { centroid: centroidCoords, bbox };
+};
+  
 
   const handleDateChange = (newIndex?: string) => {
     let selectedDate;
@@ -319,7 +360,9 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
     const matchingFeature = filteredData.features[0]; // Obtener el primer polígono correspondiente a la fecha
 
     if (matchingFeature) {
-      const centroid = getCentroid(matchingFeature.geometry.coordinates);
+      const centroid= getCentroidAndBBox(geoJson).centroid;
+      const prueba2= getCentroidAndBBox(geoJson).bbox;
+      console.log(prueba2);
       if (mapRef.current) {
         mapRef.current.flyTo({ center: centroid, zoom: 10 });
       }
@@ -357,12 +400,39 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
         center: [viewState.longitude, viewState.latitude],
         zoom: 10,
       });
-
+      
+      mapRef.current.addControl(new RulerControl, 'bottom-right');
+      mapRef.current.on('ruler.on', () => console.log('Ruler activated'));
+      mapRef.current.on('ruler.off', () => console.log('Ruler deactivated'));
+      mapRef.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
       const extractedData = extractDatesAndProvincias(geoJson);
       setProvincias(['Todo el desastre', ...extractedData.provinciasUnicas]); // Agregar opción "Todo el desastre"
       setSelectedProvincia('Todo el desastre'); // Seleccionar "Todo el desastre" por defecto
 
       mapRef.current.on('load', () => {
+
+          // Añadir fuente de terreno
+          mapRef.current.addSource('terrain-source', {
+            'type': 'raster-dem',
+            'url': 'geoserver/desafio/wms?service=WMS&request=GetMap&layers=desafio:elevacion&styles=&format=image/png&transparent=true&version=1.1.1&srs=EPSG:4326&bbox={bbox-epsg-4326}&width=256&height=256', // URL de MapTiler para DEM
+            'tileSize': 256
+        });
+
+        // Configurar el TerrainControl
+        const terrainControl = new maplibregl.TerrainControl({
+            source: 'terrain-source',
+            exaggeration: 1.5 // Factor de exageración para el relieve
+        });
+
+        // Añadir el TerrainControl al mapa
+        mapRef.current.addControl(terrainControl);
+
+        // Establecer el terreno en el mapa
+        mapRef.current.setTerrain({
+            'source': 'terrain-source',
+            'exaggeration': 1.5
+        });
+
         handleDateChange(); // Llamar a handleDateChange una vez que el estilo esté cargado
       });
     }
@@ -398,7 +468,7 @@ const LayerisMapLibre = ({ incidentId, idEvent, geoJson }: LayerisMapLibreProps)
                 `geoserver/desafio/wms?service=WMS&request=GetMap&layers=${layer.url}&styles=${layer.style}&format=image/png&transparent=true&version=1.1.1&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256`,
               ],
               tileSize: 256,
-              bounds: bbox, // Limitar la visualización usando el bounding box
+              bounds: getCentroidAndBBox(geoJson).bbox, // Limitar la visualización usando el bounding box
             });
 
             // Añadir la capa raster
