@@ -1,7 +1,6 @@
 'use client'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import maplibregl, { GeoJSONSource, Map } from 'maplibre-gl'
-import { Source, Layer, Popup, ScaleControl } from 'react-map-gl/maplibre'
 import React, { useEffect, useRef, useState } from 'react'
 import InfraestructureCard from './InfraestructureCard'
 import GraphsCard from './GraphsCard'
@@ -9,18 +8,13 @@ import MapBar from './MapBar'
 import WeatherCard from './WeatherCard'
 import Timeline from './TimelineMapBar'
 import {
-  calculateBoundingBox,
-  calculateBoundingBox2,
-  expandBBox,
   extractDatesAndIds,
   extractDatesAndProvincias,
   Geojson,
   getCentroidAndBBox,
   weatherInfo,
 } from '@/lib/mapUtils'
-import { set } from 'zod'
-import { features } from 'process'
-import { LayersIcon, MapPin } from 'lucide-react'
+import { Building, ChevronUp, Coffee, Hotel, LayersIcon, MapPin, ShoppingBag, Users, Utensils } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -33,6 +27,7 @@ import RulerControl from '@mapbox-controls/ruler'
 import '@mapbox-controls/ruler/src/index.css'
 import '@mapbox-controls/compass/src/index.css'
 import * as turf from '@turf/turf'
+import BarChartToMap from './BarChartToMap'
 
 export type Section = 'infrastructure' | 'graphs' | 'resources' | 'satellite'
 
@@ -59,6 +54,8 @@ const LayerisMapLibre = ({
   const [superficieTotal, setSuperficieTotal] = useState(0) // Nueva variable para la suma de superf
   const [layersOpen, setLayersOpen] = useState(false)
   const [activeLayers, setActiveLayers] = useState<string[]>([])
+
+
 
   const handleProvinciaChange = (event) => {
     const provincia = event
@@ -381,14 +378,36 @@ const LayerisMapLibre = ({
     }
   }, [activeLayers, availableLayers])
 
-  return (
-    <div className="h-[100vh] w-full relative">
-      <div ref={mapContainer} style={{ width: '100%', height: '100vh' }}></div>
+  const toggleInfo = () => {
+    if (infoExpanded) {
+      setInfoExpanded(false);
+    } else if (infoOpen) {
+      setInfoExpanded(true);
+    } else {
+      setInfoOpen(true);
+    }
+  };
 
-      <div className="absolute top-24 left-4 z-[1000] flex gap-2">
+  const [infoOpen, setInfoOpen] = useState(false)
+  const [infoExpanded, setInfoExpanded] = useState(false)
+
+  const [areaInfo] = useState([
+    { title: 'Municipios', value: 5, icon: Building },
+    { title: 'Cafés', value: 23, icon: Coffee },
+    { title: 'Restaurantes', value: 42, icon: Utensils },
+    { title: 'Hoteles', value: 12, icon: Hotel },
+    { title: 'Tiendas', value: 78, icon: ShoppingBag },
+    { title: 'Puntos de interés', value: 35, icon: MapPin },
+  ])
+
+  return (
+    <div className="h-full w-full relative">
+      <div ref={mapContainer} style={{ width: '100%', height: '100%' }}></div>
+
+      <div className="absolute sm:top-24 top-11 left-1 sm:left-4 z-[1000] flex flex-col sm:flex-row gap-2 sm:w-32">
         {/* Titulo */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full shadow-lg">
-          <h1 className="text-xl font-bold tracking-wider">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full shadow-lg ">
+          <h1 className="sm:text-xl text-sm font-bold tracking-wider whitespace-nowrap ">
             {nameEvent || 'Evento de desastre'}
           </h1>
         </div>
@@ -404,7 +423,7 @@ const LayerisMapLibre = ({
             value={selectedProvincia}
             onValueChange={handleProvinciaChange}
           >
-            <SelectTrigger className="w-[170px] border-none shadow-none focus:ring-0 ">
+            <SelectTrigger className="sm:w-[170px] w-32 border-none shadow-none focus:ring-0 max-sm:p-0">
               <SelectValue placeholder="Selecciona una provincia" />
             </SelectTrigger>
             <SelectContent className="z-[1000]">
@@ -426,14 +445,76 @@ const LayerisMapLibre = ({
 
       <MapBar activeSection={activeSection} onClick={toggleSection} />
 
-      {activeSection.infrastructure && (
-        <InfraestructureCard infraestructureData={InfrastructureData} />
-      )}
+      {/* BAR MOBILE */}
 
-      {activeSection.graphs && <GraphsCard />}
+      <div
+        className={`z-[1000] absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg transition-all duration-300 ease-in-out ${infoExpanded ? 'h-2/3' : 'h-10'
+          }`}
+      >
+        <div
+          className="flex justify-center items-center h-10 cursor-pointer"
+          onClick={toggleInfo}
+          aria-label={infoExpanded ? "Minimizar panel de información" : "Abrir panel de información"}
+        >
+          <ChevronUp size={24} className={`transition-transform duration-300 ${infoExpanded ? 'rotate-180' : infoOpen ? '' : 'rotate-180'}`} />
+        </div>
+        {
+          infoExpanded && (
 
-      {activeSection.resources && <WeatherCard weatherInfo={weatherInfo} />}
+            <div className="p-4 overflow-y-auto h-[calc(100%-40px)]">
+              <h2 className="text-2xl font-bold mb-6">Información del área</h2>
+              <div className="  p-4 flex space-x-4 ">
+                <div className="flex flex-wrap gap-2">
+                  {InfrastructureData.map(({ color, entity, icon, id, quantity }) => (
+                    <div
+                      key={id}
+                      className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm w-full max-w-sm"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{entity}</p>
+                        <p className="text-2xl font-bold text-gray-900">{quantity}</p>
+                      </div>
 
+                      <div className={`p-2 rounded-full ${color}`}>{icon}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-8">
+                <h3 className="text-xl font-semibold mb-4">Estadísticas demográficas</h3>
+                <div className="bg-gray-100 p-4 rounded-lg shadow flex items-center justify-between">
+                  ....
+                </div>
+              </div>
+            </div>
+          )
+
+        }
+      </div>
+
+      <div className='hidden sm:block'>
+
+        {activeSection.infrastructure && (
+          <InfraestructureCard infraestructureData={InfrastructureData} />
+        )}
+
+        {activeSection.graphs && <GraphsCard />}
+
+        {activeSection.resources && <WeatherCard weatherInfo={weatherInfo} />}
+
+        {activeSection.satellite && (
+          <div className="absolute  bottom-4 left-4 space-x-4 flex">
+            <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm w-full max-w-sm">
+              <div>
+                <p className="text-sm font-medium text-gray-900">MODIS</p>
+                <p className="text-2xl font-bold text-gray-900">2:48:21</p>
+              </div>
+
+              <div className={`p-2 rounded-full text-2xl `}>📡</div>
+            </div>
+          </div>
+        )}
+      </div>
       <div className="absolute top-4 right-4 z-10">
         <button
           onClick={() => setLayersOpen(!layersOpen)}
@@ -460,18 +541,6 @@ const LayerisMapLibre = ({
           </div>
         )}
       </div>
-      {activeSection.satellite && (
-        <div className="absolute  bottom-4 left-4 space-x-4 flex">
-          <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm w-full max-w-sm">
-            <div>
-              <p className="text-sm font-medium text-gray-900">MODIS</p>
-              <p className="text-2xl font-bold text-gray-900">2:48:21</p>
-            </div>
-
-            <div className={`p-2 rounded-full text-2xl `}>📡</div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

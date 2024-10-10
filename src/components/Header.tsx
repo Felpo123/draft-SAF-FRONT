@@ -11,7 +11,7 @@ function Header() {
 
   const noHeaderRoutes = ['/dashboard', '/maplibre']
 
-  const handleToggle = () => {}
+  const handleToggle = () => { }
 
   if (noHeaderRoutes.includes(pathname)) {
     return (
@@ -26,11 +26,6 @@ function Header() {
             className="ml-auto"
             onClick={handleToggle}
           >
-            {true ? (
-              <span>🔊</span> // Ícono o contenido cuando está activo
-            ) : (
-              <span>🔇</span> // Ícono o contenido cuando está inactivo
-            )}
           </Button>
           <img
             alt="Logo SAF"

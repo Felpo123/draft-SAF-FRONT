@@ -14,7 +14,7 @@ const Timeline = ({
   handleDateSelect,
 }: TimelineMapBarProps) => {
   return (
-    <div className="absolute top-4 left-4 p-2 " style={{ zIndex: 1000 }}>
+    <div className="absolute sm:top-4 sm:left-4 top-0 left-0 p-2 max-sm:w-1/4" style={{ zIndex: 1000 }}>
       <div className="flex items-center space-x-2 ">
         {dates.map((date, index) => (
           <React.Fragment key={date}>
@@ -22,15 +22,14 @@ const Timeline = ({
             <div className="flex flex-col items-center gap-1">
               <button
                 onClick={() => handleDateSelect(date)}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
-                  selectedDate === date
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${selectedDate === date
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
               >
                 {index + 1}
               </button>
-              <p className="text-sm font-semibold text-center mt-1">{date}</p>
+              <p className="text-sm font-semibold text-center mt-1 hidden sm:block">{date}</p>
             </div>
           </React.Fragment>
         ))}
