@@ -31,6 +31,7 @@ import BarChartToMap from './BarChartToMap'
 import TooltipControl from '@mapbox-controls/tooltip';
 import '@mapbox-controls/tooltip/src/index.css'
 import proj4 from 'proj4';
+import { set } from 'zod'
 
 const epsg4326 = 'EPSG:4326'; // Sistema geográfico (lon, lat)
 const epsg3857 = 'EPSG:3857'; // Web Mercator
@@ -58,7 +59,8 @@ const LayerisMapLibre = ({
   const [maxDistance, setMaxDistance] = useState(0);
   const mapContainer = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<Map | null>(null)
-  const dates = extractDatesAndIds(geoJson).fechasUnicas
+  const dates = extractDatesAndIds(geoJson).fechasUnicas;
+  const [incidentDates, setIncidentDates] = useState<string[]>(dates);
   const lastDate = dates[dates.length - 1];
   const [selectedDate, setSelectedDate] = useState(lastDate) // Índice de la fecha actual
   const comunas = ['Todo el desastre', ...extractDatesAndComunas(geoJson).provinciasUnicas]
@@ -69,24 +71,44 @@ const LayerisMapLibre = ({
 
 
 
-  const handleProvinciaChange = (event: string) => {
-    const comuna = event
-    setSelectedComuna(comuna)
+  const handleProvinciaChange = (selectedComuna: string) => {
+    setSelectedComuna(selectedComuna);
 
-    // Filtrar datos solo si no se ha seleccionado "Todo el desastre"
-    if (comuna === 'Todo el desastre') {
-      updateMapWithGeojson(geoJson) // Mostrar todos los datos
-    } else {
-      // Filtrar datos por la provincia seleccionada
+    // Verificar si se seleccionó una comuna específica
+    if (selectedComuna !== 'Todo el desastre') {
+      const incidentDates = geoJson.features
+        .filter(feature => dates.includes(feature.properties.date) && feature.properties.nom_com === selectedComuna)
+        .map(feature => feature.properties.date)
+        .sort();
+
+      setIncidentDates(incidentDates);
+
+      // Filtrar datos solo por la comuna y fecha seleccionada
       const filteredData = {
         ...geoJson,
-        features: geoJson.features.filter((feature) => feature.properties.nom_com === comuna && new Date(feature.properties.date).toISOString().slice(0, 10) === new Date(selectedDate).toISOString().slice(0, 10)),
+        features: geoJson.features.filter(
+          feature =>
+            feature.properties.nom_com === selectedComuna &&
+            new Date(feature.properties.date).toISOString().slice(0, 10) === new Date(selectedDate).toISOString().slice(0, 10)
+        ),
       };
 
-      // Actualizar el mapa con los datos filtrados
+      updateMapWithGeojson(filteredData);
+    } else {
+      // Si se selecciona "Todo el desastre", mostrar todos los datos y fechas
+      setIncidentDates(dates);
+
+      const filteredData = {
+        ...geoJson,
+        features: geoJson.features.filter(
+          feature => new Date(feature.properties.date).toISOString().slice(0, 10) === new Date(selectedDate).toISOString().slice(0, 10)
+        ),
+      };
+
       updateMapWithGeojson(filteredData);
     }
-  }
+  };
+
 
   const [activeSection, setActiveSection] = useState({
     infrastructure: false,
@@ -261,7 +283,7 @@ const LayerisMapLibre = ({
   };
 
   const getCircleFromMultiPolygon = (geojson) => {
-    console.log("geojson:", geojson);
+
 
     // Verificar que existan características
     if (!geojson.features || !geojson.features.length) {
@@ -279,7 +301,7 @@ const LayerisMapLibre = ({
       return { centroid: null, maxDistance: 0, circle: null };
     }
 
-    console.log("Centroid Coordinates:", centroidCoords);
+
 
     let maxDistance = 0;
     let validPoints = 0;
@@ -324,12 +346,12 @@ const LayerisMapLibre = ({
 
     // Aplicar un margen extra del 5%
     const adjustedDistance = maxDistance * 2.05;
-    console.log(`Adjusted Distance (5% added): ${adjustedDistance} meters`);
+
 
     // Generar el círculo con la distancia ajustada
     const circle = turf.circle(centroidCoords, adjustedDistance, { steps: 100, units: 'meters' });
 
-    console.log("Generated Circle:", circle);
+
 
     // Retornar los resultados
     return { centroid: centroidCoords, maxDistance: adjustedDistance, circle };
@@ -398,8 +420,7 @@ const LayerisMapLibre = ({
       });
 
       mapRef.current.addControl(new RulerControl, 'bottom-right');
-      mapRef.current.on('ruler.on', () => console.log('Ruler activated'));
-      mapRef.current.on('ruler.off', () => console.log('Ruler deactivated'));
+
 
 
       mapRef.current.on('load', () => {
@@ -511,7 +532,7 @@ const LayerisMapLibre = ({
       </div>
 
       <Timeline
-        dates={dates}
+        dates={incidentDates}
         selectedDate={selectedDate}
         handleDateSelect={handleDateChange}
       />
