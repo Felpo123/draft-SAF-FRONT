@@ -13,12 +13,17 @@ import { set } from 'zod';
 import { features } from 'process';
 import { LayersIcon, MapPin } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-
+import { Feature, Polygon, GeoJsonProperties } from 'geojson';
 import RulerControl from '@mapbox-controls/ruler';
 import '@mapbox-controls/ruler/src/index.css';
 import '@mapbox-controls/compass/src/index.css';
+import TooltipControl from '@mapbox-controls/tooltip';
+import '@mapbox-controls/tooltip/src/index.css'
 import * as turf from '@turf/turf';
+import proj4 from 'proj4';
 
+const epsg4326 = 'EPSG:4326'; // Sistema geográfico (lon, lat)
+const epsg3857 = 'EPSG:3857'; // Web Mercator
 export type Section = 'infrastructure' | 'graphs' | 'resources' | 'satellite';
 
 interface LayerisMapLibreProps {
@@ -31,6 +36,14 @@ export type ControlOptions = {
 };
 
 const LayerisMapLibre = ({ nameEvent, idEvent, geoJson }: LayerisMapLibreProps) => {
+  // Estado inicializado con un bbox predeterminado
+  
+  type CircleType = Feature<Polygon, GeoJsonProperties> | null;
+
+
+  const [circle, setCircle] = useState<CircleType>(null);
+  const [centroidse, setCentroidse] = useState([]);
+  const [maxDistance, setMaxDistance] = useState(0);  // BBox para el mapa completo (todo el mundo)
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const dates = extractDatesAndIds(geoJson).fechasUnicas;
@@ -41,7 +54,9 @@ const LayerisMapLibre = ({ nameEvent, idEvent, geoJson }: LayerisMapLibreProps) 
   const [layersOpen, setLayersOpen] = useState(false);
 
   console.log('geoJson:', geoJson);
-
+  const geoJsonToWkt = (geometry) => {
+    return wellknown.stringify(geometry);
+  };
   // Función para extraer fechas y provincias únicas
   const extractDatesAndProvincias = (geojsonData) => {
     const fechasUnicas = [];
@@ -53,7 +68,7 @@ const LayerisMapLibre = ({ nameEvent, idEvent, geoJson }: LayerisMapLibreProps) 
   });
     geojsonData.features.forEach((feature) => {
       const fecha = feature.properties.date;
-      const provincia = feature.properties.nom_pro; // Utilizamos nom_pro para la provincia
+      const provincia = feature.properties.nom_com; // Utilizamos nom_pro para la provincia
 
       if (fecha && !fechasUnicas.includes(fecha)) {
         fechasUnicas.push(fecha);
@@ -82,7 +97,7 @@ const LayerisMapLibre = ({ nameEvent, idEvent, geoJson }: LayerisMapLibreProps) 
       // Filtrar datos por la provincia seleccionada
       const filteredData = {
         ...geoJson,
-        features: geoJson.features.filter((feature) => feature.properties.nom_pro === provincia),
+        features: geoJson.features.filter((feature) => feature.properties.nom_com === provincia),
       };
 
       // Actualizar el mapa con los datos filtrados
@@ -222,47 +237,7 @@ const LayerisMapLibre = ({ nameEvent, idEvent, geoJson }: LayerisMapLibreProps) 
     );
   };
 
-  const handleZoomIn = () => {
-    setViewState((prevState) => ({
-      ...prevState,
-      zoom: Math.min(prevState.zoom + 1, 20), // Limitar zoom máximo a 20
-    }))
-  }
 
-  const handleZoomOut = () => {
-    setViewState((prevState) => ({
-      ...prevState,
-      zoom: Math.max(prevState.zoom - 1, 1), // Limitar zoom mínimo a 1
-    }))
-  }
-
-  // Crear los datos GeoJSON para el círculo
-  const circleCenter = [-72.605348, -38.747434] // Centro del círculo
-  const circleRadius = 10 // Radio en km
-
-  // Calcular el bounding box del círculo
-  const bbox = calculateBoundingBox(
-    circleCenter[0],
-    circleCenter[1],
-    circleRadius,
-  )
-
-  // Calcular el bounding box del círculo
-  const bboxToWMS = calculateBoundingBox2(
-    circleCenter[0],
-    circleCenter[1],
-    circleRadius,
-  )
-
-  const circleLayer = {
-    id: 'circle-layer',
-    type: 'fill',
-    source: 'circle',
-    paint: {
-      'fill-color': '#007cbf',
-      'fill-opacity': 0.3,
-    },
-  }
 
 
   const updateMapWithGeojson = (geojsonData: Geojson) => {
@@ -302,48 +277,82 @@ const LayerisMapLibre = ({ nameEvent, idEvent, geoJson }: LayerisMapLibreProps) 
       }
     }
   };
-  // Función para expandir el BBOX con un margen
-const expandBBox = (bbox: [number, number, number, number], marginFactor: number): [number, number, number, number] => {
-  const [minLon, minLat, maxLon, maxLat] = bbox;
+  const getCircleFromMultiPolygon = (geojson) => {
+    console.log("geojson:", geojson);
 
-  // Expande la latitud y longitud en ambos extremos
-  const latMargin = (maxLat - minLat) * marginFactor;
-  const lonMargin = (maxLon - minLon) * marginFactor;
+    // Verificar que existan características
+    if (!geojson.features || !geojson.features.length) {
+        console.warn("No features available in the geojson.");
+        return { centroid: null, maxDistance: 0, circle: null };
+    }
 
-  return [
-    minLon - lonMargin, // Extiende el límite de longitud mínima
-    minLat - latMargin, // Extiende el límite de latitud mínima
-    maxLon + lonMargin, // Extiende el límite de longitud máxima
-    maxLat + latMargin  // Extiende el límite de latitud máxima
-  ];
+    // Calcular el centroide del MultiPolygon
+    const centroid = turf.centroid(geojson);
+    const centroidCoords = centroid.geometry.coordinates;
+
+    // Verificar que el centroide sea un conjunto válido de coordenadas (números)
+    if (!Array.isArray(centroidCoords) || centroidCoords.length !== 2 || isNaN(centroidCoords[0]) || isNaN(centroidCoords[1])) {
+        console.error("Invalid centroid coordinates:", centroidCoords);
+        return { centroid: null, maxDistance: 0, circle: null };
+    }
+
+    console.log("Centroid Coordinates:", centroidCoords);
+
+    let maxDistance = 0;
+    let validPoints = 0;
+
+    // Iterar sobre las características del GeoJSON
+    geojson.features.forEach((feature) => {
+        if (feature.geometry && feature.geometry.type === 'MultiPolygon') {
+            const coordinates = turf.getCoords(feature);
+
+            coordinates.forEach((polygon) => {
+                polygon.forEach((ring) => {
+                    ring.forEach((point) => {
+                        // Verificar que las coordenadas del punto sean válidas
+                        if (Array.isArray(point) && point.length === 2 && !isNaN(point[0]) && !isNaN(point[1])) {
+                            validPoints += 1;
+                            const pointGeoJson = turf.point(point);
+                            const distance = turf.distance(pointGeoJson, turf.point(centroidCoords), { units: 'meters' });
+
+                            // Actualizar maxDistance si la distancia es mayor
+                            if (distance > maxDistance) {
+                                maxDistance = distance;
+                            }
+                        } else {
+                            console.warn("Invalid point detected:", point);
+                        }
+                    });
+                });
+            });
+        }
+    });
+
+    // Comprobación adicional para asegurarse de que se han procesado puntos válidos
+    if (validPoints === 0) {
+        console.warn("No valid points found in the GeoJSON.");
+        return { centroid: null, maxDistance: 0, circle: null };
+    }
+
+    // Si no se ha encontrado una distancia máxima mayor, usar un radio mínimo
+    if (maxDistance === 0) {
+        maxDistance = 100; // Puedes ajustar este valor como radio mínimo en metros
+    }
+
+    // Aplicar un margen extra del 5%
+    const adjustedDistance = maxDistance * 2.05;
+    console.log(`Adjusted Distance (5% added): ${adjustedDistance} meters`);
+
+    // Generar el círculo con la distancia ajustada
+    const circle = turf.circle(centroidCoords, adjustedDistance, { steps: 100, units: 'meters' });
+
+    console.log("Generated Circle:", circle);
+
+    // Retornar los resultados
+    return { centroid: centroidCoords, maxDistance: adjustedDistance, circle };
 };
 
-// Función para asegurarse de que las coordenadas tienen exactamente dos elementos
-const ensureLngLat = (coords: number[]): [number, number] => {
-  if (coords.length >= 2) {
-    return [coords[0], coords[1]]; // Solo tomamos los dos primeros elementos: [longitude, latitude]
-  } else {
-    throw new Error("Las coordenadas no son válidas. Se esperaban al menos longitud y latitud.");
-  }
-};
 
-// Obtener el centroide y la BBOX
-const getCentroidAndBBox = (geojson: any) => {
-  // Calcula el centroide usando Turf.js
-  const centroid = turf.centroid(geojson);
-
-  // Coordenadas del centroide (asegúrate de que sean un array de [lon, lat])
-  const centroidCoords: [number, number] = centroid.geometry.coordinates as [number, number];
-
-  // Calcula el BBOX (Bounding Box) usando Turf.js
-  let bbox = turf.bbox(geojson); // [minLon, minLat, maxLon, maxLat]
-
-  // Expandir el BBOX con un margen adicional (por ejemplo, un 10%)
-  bbox = expandBBox(bbox, 0.1); // 0.1 significa expandir en un 10%
-
-  return { centroid: centroidCoords, bbox };
-};
-  
 
   const handleDateChange = (newIndex?: string) => {
     let selectedDate;
@@ -357,7 +366,7 @@ const getCentroidAndBBox = (geojson: any) => {
       ...geoJson,
       features: geoJson.features.filter((feature) =>
         new Date(feature.properties.date).toISOString().slice(0, 10) === new Date(selectedDate).toISOString().slice(0, 10) &&
-        (selectedProvincia === 'Todo el desastre' || feature.properties.nom_pro === selectedProvincia)
+        (selectedProvincia === 'Todo el desastre' || feature.properties.nom_com === selectedProvincia)
       ),
     };
 
@@ -368,20 +377,35 @@ const getCentroidAndBBox = (geojson: any) => {
 
     // Si hay un polígono coincidente, centrar el mapa en su centroide
     const matchingFeature = filteredData.features[0]; // Obtener el primer polígono correspondiente a la fecha
-
+    const centroid= getCircleFromMultiPolygon(filteredData).centroid;
+    console.log(centroid);
     if (matchingFeature) {
-      const centroid= getCentroidAndBBox(geoJson).centroid;
-      const prueba2= getCentroidAndBBox(geoJson).bbox;
-      console.log(prueba2);
       if (mapRef.current) {
-        mapRef.current.flyTo({ center: centroid, zoom: 10 });
+        mapRef.current.flyTo({ center:centroid, zoom: 12 });
+
       }
     }
-
+    const { maxDistance, circle } = getCircleFromMultiPolygon(filteredData);
+    console.log("Centroid:", centroid);
+    console.log("Max Distance:", maxDistance);
+    console.log("Circle:", circle);
+    setCircle(circle);
     updateMapWithGeojson(filteredData);
-
+   
+    
   }
-
+  const convertCoordsTo3857 = (coords) => {
+    return coords.map(coord => proj4(epsg4326, epsg3857, coord));
+  };
+  const getCqlFilterForWms = (circleCoords) => {
+    // Convertir coordenadas de EPSG:4326 a EPSG:3857
+    const convertedCoords = convertCoordsTo3857(circleCoords);
+  
+    // Crear la geometría de POLYGON en EPSG:3857
+    const cqlFilter = `INTERSECTS(geom, POLYGON ((${convertedCoords.map(coord => coord.join(' ')).join(', ')})))`;
+  
+    return cqlFilter;
+  };
   useEffect(() => {
     if (mapContainer.current && !mapRef.current) {
       mapRef.current = new maplibregl.Map({
@@ -410,40 +434,16 @@ const getCentroidAndBBox = (geojson: any) => {
         center: [viewState.longitude, viewState.latitude],
         zoom: 10,
       });
-      
+
       mapRef.current.addControl(new RulerControl, 'bottom-right');
       mapRef.current.on('ruler.on', () => console.log('Ruler activated'));
       mapRef.current.on('ruler.off', () => console.log('Ruler deactivated'));
-      mapRef.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
       const extractedData = extractDatesAndProvincias(geoJson);
       setProvincias(['Todo el desastre', ...extractedData.provinciasUnicas]); // Agregar opción "Todo el desastre"
       setSelectedProvincia('Todo el desastre'); // Seleccionar "Todo el desastre" por defecto
 
       mapRef.current.on('load', () => {
         mapRef.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-
-
-          // Añadir fuente de terreno
-          mapRef.current.addSource('terrain-source', {
-            'type': 'raster-dem',
-            'url': 'geoserver/desafio/wms?service=WMS&request=GetMap&layers=desafio:elevacion&styles=&format=image/png&transparent=true&version=1.1.1&srs=EPSG:4326&bbox={bbox-epsg-4326}&width=256&height=256', // URL de MapTiler para DEM
-            'tileSize': 256
-        });
-
-        // Configurar el TerrainControl
-        const terrainControl = new maplibregl.TerrainControl({
-            source: 'terrain-source',
-            exaggeration: 1.5 // Factor de exageración para el relieve
-        });
-
-        // Añadir el TerrainControl al mapa
-        mapRef.current.addControl(terrainControl);
-
-        // Establecer el terreno en el mapa
-        mapRef.current.setTerrain({
-            'source': 'terrain-source',
-            'exaggeration': 1.5
-        });
 
         handleDateChange(); // Llamar a handleDateChange una vez que el estilo esté cargado
       });
@@ -469,30 +469,37 @@ const getCentroidAndBBox = (geojson: any) => {
       availableLayers
         .filter((layer) => activeLayers.includes(layer.id))
         .forEach((layer) => {
-          const bboxToWMS = [/* valores del bounding box (bbox) */];
+          if (circle) {
+            const geom = turf.getGeom(circle);
+            const coords = turf.getCoords(geom)[0]; // Suponiendo que es un polígono
+            coords.push(coords[0]); // Cerrar el polígono
+            
+            // Obtener el filtro CQL con las coordenadas convertidas
+            const cqlFilter = getCqlFilterForWms(coords);
+                // Verificar si la capa ya está agregada antes de añadirla
+                if (!mapRef.current.getSource(layer.id)) {
+                    // Añadir la fuente raster
+                    mapRef.current.addSource(layer.id, {
+                        type: 'raster',
+                        tiles: [
+                            `http://192.168.1.116:8080/geoserver/desafio/wms?service=WMS&request=GetMap&layers=${layer.url}&styles=${layer.style}&format=image/png&transparent=true&version=1.1.1&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256&CQL_FILTER=${cqlFilter}`,
 
-          // Verificar si la capa ya está agregada antes de añadirla
-          if (!mapRef.current.getSource(layer.id)) {
-            // Añadir la fuente raster
-            mapRef.current.addSource(layer.id, {
-              type: 'raster',
-              tiles: [
-                `geoserver/desafio/wms?service=WMS&request=GetMap&layers=${layer.url}&styles=${layer.style}&format=image/png&transparent=true&version=1.1.1&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256`,
-              ],
-              tileSize: 256,
-              bounds: getCentroidAndBBox(geoJson).bbox, // Limitar la visualización usando el bounding box
-            });
+                        ],
+                        tileSize: 256, // Limitar la visualización usando el bounding box
+                    });
 
-            // Añadir la capa raster
-            mapRef.current.addLayer({
-              id: layer.id,
-              type: 'raster',
-              source: layer.id,
-            });
-          }
-        });
-    }
-  }, [activeLayers, availableLayers, bbox]);
+                    // Añadir la capa raster
+                    mapRef.current.addLayer({
+                        id: layer.id,
+                        type: 'raster',
+                        source: layer.id,
+                    });
+                }
+
+        }
+    });
+}
+  }, [activeLayers, availableLayers]);
 
   return (
     <div className='h-[100vh] w-full relative'>
@@ -607,3 +614,5 @@ const getCentroidAndBBox = (geojson: any) => {
 }
 
 export default LayerisMapLibre
+
+
