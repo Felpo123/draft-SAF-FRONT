@@ -16,7 +16,7 @@ interface MapBarProps {
 function MapBar({ activeSection, onClick }: MapBarProps) {
   return (
     <div
-      className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-4 bg-white rounded-full shadow-md p-2"
+      className="absolute bottom-4 left-1/2 transform -translate-x-1/2 sm:flex space-x-4 bg-white rounded-full shadow-md p-2 hidden"
       style={{ zIndex: 1000 }}
     >
       <Button
@@ -51,6 +51,7 @@ function MapBar({ activeSection, onClick }: MapBarProps) {
       >
         <Satellite className="h-6 w-6" />
       </Button>
+      <p>Informacion</p>
     </div>
   )
 }

@@ -22,7 +22,7 @@ function Sidebar() {
     <aside
       className={`${
         sidebarExpanded ? 'md:w-64' : 'md:w-20'
-      } xl:flex flex-col transition-all duration-300 ease-in-out bg-white text-primary-foreground relative hidden shadow-md `}
+      } md:flex flex-col transition-all duration-300 ease-in-out bg-white text-primary-foreground relative hidden shadow-md `}
     >
       <div className="flex items-center  space-x-2 p-4 ">
         <div className="w-16 h-16 bg-white flex items-center justify-center">

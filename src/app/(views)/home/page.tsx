@@ -16,23 +16,20 @@ const fetchDataIncident = async () => {
 
     const data = (await response.json()) as Geojson
 
-    const groupIncidences = agruparIncidentesPorEvento(data.features);
+    const groupIncidences = agruparIncidentesPorEvento(data.features)
 
-    return groupIncidences;
-
+    return groupIncidences
   } catch (error) {
     console.error('Error al obtener los datos WFS:', error)
   }
 }
 
-
 export default async function DemoPage() {
-  const data = await fetchDataIncident();
+  const data = await fetchDataIncident()
 
   if (!data) {
-    return notFound();
+    return notFound()
   }
-
 
   return (
     <div className="container mx-auto py-10">
