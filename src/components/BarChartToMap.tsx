@@ -47,7 +47,7 @@ const chartdata = [
 function BarChartToMap() {
   return (
     <BarChart
-      className="h-[500px] w-[350px]"
+      className="sm:h-[500px] sm:w-[350px] h-[400px] w-[300px]"
       data={chartdata}
       index="category"
       categories={['value']}

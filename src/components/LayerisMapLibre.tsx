@@ -80,7 +80,7 @@ const LayerisMapLibre = ({
       // Filtrar datos por la provincia seleccionada
       const filteredData = {
         ...geoJson,
-        features: geoJson.features.filter((feature) => feature.properties.nom_com === comuna),
+        features: geoJson.features.filter((feature) => feature.properties.nom_com === comuna && new Date(feature.properties.date).toISOString().slice(0, 10) === new Date(selectedDate).toISOString().slice(0, 10)),
       };
 
       // Actualizar el mapa con los datos filtrados
@@ -89,10 +89,10 @@ const LayerisMapLibre = ({
   }
 
   const [activeSection, setActiveSection] = useState({
-    infrastructure: true,
-    graphs: true,
-    resources: true,
-    satellite: true,
+    infrastructure: false,
+    graphs: false,
+    resources: false,
+    satellite: false,
   })
 
   const toggleSection = (section: Section) => {
@@ -521,7 +521,7 @@ const LayerisMapLibre = ({
       {/* BAR MOBILE */}
 
       <div
-        className={`block sm:hidden z-[1000] absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg transition-all duration-300 ease-in-out ${infoExpanded ? 'h-2/3' : 'h-10'
+        className={`block sm:hidden z-[1000] absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg transition-all duration-300 ease-in-out ${infoExpanded ? 'h-3/4' : 'h-10'
           }`}
       >
         <div
@@ -556,7 +556,15 @@ const LayerisMapLibre = ({
               <div className="mt-8">
                 <h3 className="text-xl font-semibold mb-4">Estadísticas demográficas</h3>
                 <div className="bg-gray-100 p-4 rounded-lg shadow flex items-center justify-between">
-                  ....
+                  <div className="p-4 flex space-x-4 bg-white rounded-sm ">
+                    <BarChartToMap />
+                  </div>
+                </div>
+
+                <div className="bg-gray-100 p-4 rounded-lg shadow flex items-center justify-between">
+                  <div className="p-4 flex space-x-4 bg-white rounded-sm ">
+                    <BarChartToMap />
+                  </div>
                 </div>
               </div>
             </div>
