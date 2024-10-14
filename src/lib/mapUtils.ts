@@ -205,13 +205,13 @@ export function agruparIncidentesPorEvento(incidentes: Feature[]): Feature[] {
   return Object.values(incidentesAgrupados)
 }
 
-export const extractDatesAndProvincias = (geojsonData) => {
+export const extractDatesAndComunas = (geojsonData) => {
   const fechasUnicas = []
   const provinciasUnicas = new Set()
 
   geojsonData.features.forEach((feature) => {
     const fecha = feature.properties.date
-    const provincia = feature.properties.nom_pro // Utilizamos nom_pro para la provincia
+    const provincia = feature.properties.nom_com // Utilizamos nom_pro para la provincia
 
     if (fecha && !fechasUnicas.includes(fecha)) {
       fechasUnicas.push(fecha)

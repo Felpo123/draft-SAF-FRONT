@@ -8,8 +8,8 @@ import MapBar from './MapBar'
 import WeatherCard from './WeatherCard'
 import Timeline from './TimelineMapBar'
 import {
+  extractDatesAndComunas,
   extractDatesAndIds,
-  extractDatesAndProvincias,
   Geojson,
   getCentroidAndBBox,
   weatherInfo,
@@ -55,35 +55,36 @@ const LayerisMapLibre = ({
 
   const [circle, setCircle] = useState<CircleType>(null);
   const [centroidse, setCentroidse] = useState([]);
-  const [maxDistance, setMaxDistance] = useState(0); 
+  const [maxDistance, setMaxDistance] = useState(0);
   const mapContainer = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<Map | null>(null)
   const dates = extractDatesAndIds(geoJson).fechasUnicas
-  const [currentIndex, setCurrentIndex] = useState(dates[dates.length - 1]) // Índice de la fecha actual
-  const [provincias, setProvincias] = useState([]) // Almacena las provincias disponibles
-  const [selectedProvincia, setSelectedProvincia] = useState('Todo el desastre') // Provincia seleccionada
+  const lastDate = dates[dates.length - 1];
+  const [selectedDate, setSelectedDate] = useState(lastDate) // Índice de la fecha actual
+  const comunas = ['Todo el desastre', ...extractDatesAndComunas(geoJson).provinciasUnicas]
+  const [selectedComuna, setSelectedComuna] = useState('Todo el desastre') // Provincia seleccionada
   const [superficieTotal, setSuperficieTotal] = useState(0) // Nueva variable para la suma de superf
   const [layersOpen, setLayersOpen] = useState(false)
   const [activeLayers, setActiveLayers] = useState<string[]>([])
 
 
 
-  const handleProvinciaChange = (event) => {
-    const provincia = event
-    setSelectedProvincia(provincia)
+  const handleProvinciaChange = (event: string) => {
+    const comuna = event
+    setSelectedComuna(comuna)
 
     // Filtrar datos solo si no se ha seleccionado "Todo el desastre"
-    if (provincia === 'Todo el desastre') {
+    if (comuna === 'Todo el desastre') {
       updateMapWithGeojson(geoJson) // Mostrar todos los datos
     } else {
       // Filtrar datos por la provincia seleccionada
       const filteredData = {
         ...geoJson,
-        features: geoJson.features.filter((feature) => feature.properties.nom_com === provincia),
+        features: geoJson.features.filter((feature) => feature.properties.nom_com === comuna),
       };
 
       // Actualizar el mapa con los datos filtrados
-      updateMapWithGeojson(filteredData)
+      updateMapWithGeojson(filteredData);
     }
   }
 
@@ -199,31 +200,57 @@ const LayerisMapLibre = ({
     if (mapRef.current) {
       const map = mapRef.current
 
+      // Calcular la suma de la superficie ("superf") para la fecha seleccionada
+      const superficieSum = geojsonData.features.reduce(
+        (sum, feature) => sum + (feature.properties.superf || 0),
+        0,
+      )
+      setSuperficieTotal(superficieSum) // Actualizar el estado con la suma de superficies
+
+      // Si hay un polígono coincidente, centrar el mapa en su centroide
+      const matchingFeature = geojsonData.features[0]; // Obtener el primer polígono correspondiente a la fecha
+      const centroid = getCircleFromMultiPolygon(geojsonData).centroid;
+
+      if (matchingFeature && centroid) {
+        map.flyTo({ center: centroid as maplibregl.LngLatLike, zoom: 12 });
+      }
+      const { maxDistance, circle } = getCircleFromMultiPolygon(geojsonData);
+
+      setCircle(circle);
+
       if (!map.getSource('geojson-source')) {
         map.addSource('geojson-source', {
           type: 'geojson',
           data: geojsonData,
         })
 
-        map.addLayer({
-          id: 'polygons-layer',
-          type: 'fill',
-          source: 'geojson-source',
-          paint: {
-            'fill-color': '#007cbf',
-            'fill-opacity': 0.6,
+        map.addLayer(
+          {
+            id: 'polygons-layer',
+            type: 'fill',
+            source: 'geojson-source',
+            paint: {
+              'fill-color': '#007cbf',
+              'fill-opacity': 0.8,
+            },
           },
-        })
 
-        map.addLayer({
-          id: 'polygon-borders',
-          type: 'line',
-          source: 'geojson-source',
-          paint: {
-            'line-color': '#ffffff',
-            'line-width': 2,
+        );
+
+
+        map.addLayer(
+          {
+            id: 'polygon-borders',
+            type: 'line',
+            source: 'geojson-source',
+            paint: {
+              'line-color': '#ffffff',
+              'line-width': 3,
+              'line-opacity': 0.9,
+            },
           },
-        })
+
+        );
       } else {
         const source = map.getSource('geojson-source')
         if (source && (source as GeoJSONSource).setData) {
@@ -232,13 +259,14 @@ const LayerisMapLibre = ({
       }
     }
   };
+
   const getCircleFromMultiPolygon = (geojson) => {
     console.log("geojson:", geojson);
 
     // Verificar que existan características
     if (!geojson.features || !geojson.features.length) {
-        console.warn("No features available in the geojson.");
-        return { centroid: null, maxDistance: 0, circle: null };
+      console.warn("No features available in the geojson.");
+      return { centroid: null, maxDistance: 0, circle: null };
     }
 
     // Calcular el centroide del MultiPolygon
@@ -247,8 +275,8 @@ const LayerisMapLibre = ({
 
     // Verificar que el centroide sea un conjunto válido de coordenadas (números)
     if (!Array.isArray(centroidCoords) || centroidCoords.length !== 2 || isNaN(centroidCoords[0]) || isNaN(centroidCoords[1])) {
-        console.error("Invalid centroid coordinates:", centroidCoords);
-        return { centroid: null, maxDistance: 0, circle: null };
+      console.error("Invalid centroid coordinates:", centroidCoords);
+      return { centroid: null, maxDistance: 0, circle: null };
     }
 
     console.log("Centroid Coordinates:", centroidCoords);
@@ -258,40 +286,40 @@ const LayerisMapLibre = ({
 
     // Iterar sobre las características del GeoJSON
     geojson.features.forEach((feature) => {
-        if (feature.geometry && feature.geometry.type === 'MultiPolygon') {
-            const coordinates = turf.getCoords(feature);
+      if (feature.geometry && feature.geometry.type === 'MultiPolygon') {
+        const coordinates = turf.getCoords(feature);
 
-            coordinates.forEach((polygon) => {
-                polygon.forEach((ring) => {
-                    ring.forEach((point) => {
-                        // Verificar que las coordenadas del punto sean válidas
-                        if (Array.isArray(point) && point.length === 2 && !isNaN(point[0]) && !isNaN(point[1])) {
-                            validPoints += 1;
-                            const pointGeoJson = turf.point(point);
-                            const distance = turf.distance(pointGeoJson, turf.point(centroidCoords), { units: 'meters' });
+        coordinates.forEach((polygon) => {
+          polygon.forEach((ring) => {
+            ring.forEach((point) => {
+              // Verificar que las coordenadas del punto sean válidas
+              if (Array.isArray(point) && point.length === 2 && !isNaN(point[0]) && !isNaN(point[1])) {
+                validPoints += 1;
+                const pointGeoJson = turf.point(point);
+                const distance = turf.distance(pointGeoJson, turf.point(centroidCoords), { units: 'meters' });
 
-                            // Actualizar maxDistance si la distancia es mayor
-                            if (distance > maxDistance) {
-                                maxDistance = distance;
-                            }
-                        } else {
-                            console.warn("Invalid point detected:", point);
-                        }
-                    });
-                });
+                // Actualizar maxDistance si la distancia es mayor
+                if (distance > maxDistance) {
+                  maxDistance = distance;
+                }
+              } else {
+                console.warn("Invalid point detected:", point);
+              }
             });
-        }
+          });
+        });
+      }
     });
 
     // Comprobación adicional para asegurarse de que se han procesado puntos válidos
     if (validPoints === 0) {
-        console.warn("No valid points found in the GeoJSON.");
-        return { centroid: null, maxDistance: 0, circle: null };
+      console.warn("No valid points found in the GeoJSON.");
+      return { centroid: null, maxDistance: 0, circle: null };
     }
 
     // Si no se ha encontrado una distancia máxima mayor, usar un radio mínimo
     if (maxDistance === 0) {
-        maxDistance = 100; // Puedes ajustar este valor como radio mínimo en metros
+      maxDistance = 100; // Puedes ajustar este valor como radio mínimo en metros
     }
 
     // Aplicar un margen extra del 5%
@@ -305,64 +333,41 @@ const LayerisMapLibre = ({
 
     // Retornar los resultados
     return { centroid: centroidCoords, maxDistance: adjustedDistance, circle };
-};
+  };
 
 
 
-  const handleDateChange = (newIndex?: string) => {
-    let selectedDate;
+  const handleDateChange = (timelineDate?: string) => {
+    let incidentDate;
 
-    !newIndex ? (selectedDate = dates[dates.length - 1]) : (selectedDate = newIndex)
+    !timelineDate ? (incidentDate = lastDate) : (incidentDate = timelineDate)
 
-    setCurrentIndex(selectedDate)
+    setSelectedDate(incidentDate)
 
     const filteredData = {
       ...geoJson,
       features: geoJson.features.filter(
         (feature) =>
           new Date(feature.properties.date).toISOString().slice(0, 10) ===
-          new Date(selectedDate).toISOString().slice(0, 10) &&
-          (selectedProvincia === 'Todo el desastre' ||
-            feature.properties.nom_pro === selectedProvincia),
+          new Date(incidentDate).toISOString().slice(0, 10) &&
+          (selectedComuna === 'Todo el desastre' ||
+            feature.properties.nom_com === selectedComuna),
       ),
     }
 
-    // Calcular la suma de la superficie ("superf") para la fecha seleccionada
-    const superficieSum = filteredData.features.reduce(
-      (sum, feature) => sum + (feature.properties.superf || 0),
-      0,
-    )
-    setSuperficieTotal(superficieSum) // Actualizar el estado con la suma de superficies
-
-    // Si hay un polígono coincidente, centrar el mapa en su centroide
-    const matchingFeature = filteredData.features[0]; // Obtener el primer polígono correspondiente a la fecha
-    const centroid= getCircleFromMultiPolygon(filteredData).centroid;
-    console.log(centroid);
-    if (matchingFeature) {
-      if (mapRef.current) {
-        mapRef.current.flyTo({ center:centroid, zoom: 12 });
-
-      }
-    }
-    const { maxDistance, circle } = getCircleFromMultiPolygon(filteredData);
-    console.log("Centroid:", centroid);
-    console.log("Max Distance:", maxDistance);
-    console.log("Circle:", circle);
-    setCircle(circle);
     updateMapWithGeojson(filteredData);
-   
-    
   }
+
   const convertCoordsTo3857 = (coords) => {
     return coords.map(coord => proj4(epsg4326, epsg3857, coord));
   };
   const getCqlFilterForWms = (circleCoords) => {
     // Convertir coordenadas de EPSG:4326 a EPSG:3857
     const convertedCoords = convertCoordsTo3857(circleCoords);
-  
+
     // Crear la geometría de POLYGON en EPSG:3857
     const cqlFilter = `INTERSECTS(geom, POLYGON ((${convertedCoords.map(coord => coord.join(' ')).join(', ')})))`;
-  
+
     return cqlFilter;
   };
   useEffect(() => {
@@ -395,9 +400,7 @@ const LayerisMapLibre = ({
       mapRef.current.addControl(new RulerControl, 'bottom-right');
       mapRef.current.on('ruler.on', () => console.log('Ruler activated'));
       mapRef.current.on('ruler.off', () => console.log('Ruler deactivated'));
-      const extractedData = extractDatesAndProvincias(geoJson);
-      setProvincias(['Todo el desastre', ...extractedData.provinciasUnicas]); // Agregar opción "Todo el desastre"
-      setSelectedProvincia('Todo el desastre'); // Seleccionar "Todo el desastre" por defecto
+
 
       mapRef.current.on('load', () => {
         mapRef.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
@@ -429,34 +432,34 @@ const LayerisMapLibre = ({
             const geom = turf.getGeom(circle);
             const coords = turf.getCoords(geom)[0]; // Suponiendo que es un polígono
             coords.push(coords[0]); // Cerrar el polígono
-            
+
             // Obtener el filtro CQL con las coordenadas convertidas
             const cqlFilter = getCqlFilterForWms(coords);
-                // Verificar si la capa ya está agregada antes de añadirla
-                if (!mapRef.current.getSource(layer.id)) {
-                    // Añadir la fuente raster
-                    mapRef.current.addSource(layer.id, {
-                        type: 'raster',
-                        tiles: [
-                            `http://192.168.1.116:8080/geoserver/desafio/wms?service=WMS&request=GetMap&layers=${layer.url}&styles=${layer.style}&format=image/png&transparent=true&version=1.1.1&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256&CQL_FILTER=${cqlFilter}`,
+            // Verificar si la capa ya está agregada antes de añadirla
+            if (!mapRef.current.getSource(layer.id)) {
+              // Añadir la fuente raster
+              mapRef.current.addSource(layer.id, {
+                type: 'raster',
+                tiles: [
+                  `http://192.168.1.116:8080/geoserver/desafio/wms?service=WMS&request=GetMap&layers=${layer.url}&styles=${layer.style}&format=image/png&transparent=true&version=1.1.1&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256&CQL_FILTER=${cqlFilter}`,
 
-                        ],
-                        tileSize: 256, // Limitar la visualización usando el bounding box
-                    });
+                ],
+                tileSize: 256, // Limitar la visualización usando el bounding box
+              });
 
-                    // Añadir la capa raster
-                    mapRef.current.addLayer({
-                        id: layer.id,
-                        type: 'raster',
-                        source: layer.id,
-                    });
-                }
+              // Añadir la capa raster
+              mapRef.current.addLayer({
+                id: layer.id,
+                type: 'raster',
+                source: layer.id,
+              });
+            }
 
-        }
-    });
-}
+          }
+        });
+    }
   }, [activeLayers, availableLayers]);
-  
+
   const toggleInfo = () => {
     if (infoExpanded) {
       setInfoExpanded(false);
@@ -469,15 +472,6 @@ const LayerisMapLibre = ({
 
   const [infoOpen, setInfoOpen] = useState(false)
   const [infoExpanded, setInfoExpanded] = useState(false)
-
-  const [areaInfo] = useState([
-    { title: 'Municipios', value: 5, icon: Building },
-    { title: 'Cafés', value: 23, icon: Coffee },
-    { title: 'Restaurantes', value: 42, icon: Utensils },
-    { title: 'Hoteles', value: 12, icon: Hotel },
-    { title: 'Tiendas', value: 78, icon: ShoppingBag },
-    { title: 'Puntos de interés', value: 35, icon: MapPin },
-  ])
 
   return (
     <div className="h-full w-full relative">
@@ -499,14 +493,14 @@ const LayerisMapLibre = ({
         >
           <MapPin className="h-5 w-5 text-blue-500" />
           <Select
-            value={selectedProvincia}
+            value={selectedComuna}
             onValueChange={handleProvinciaChange}
           >
             <SelectTrigger className="sm:w-[170px] w-32 border-none shadow-none focus:ring-0 max-sm:p-0">
               <SelectValue placeholder="Selecciona una provincia" />
             </SelectTrigger>
             <SelectContent className="z-[1000]">
-              {provincias.map((province) => (
+              {comunas.map((province) => (
                 <SelectItem key={province} value={province}>
                   {province}
                 </SelectItem>
@@ -518,7 +512,7 @@ const LayerisMapLibre = ({
 
       <Timeline
         dates={dates}
-        selectedDate={currentIndex}
+        selectedDate={selectedDate}
         handleDateSelect={handleDateChange}
       />
 
@@ -527,7 +521,7 @@ const LayerisMapLibre = ({
       {/* BAR MOBILE */}
 
       <div
-        className={`z-[1000] absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg transition-all duration-300 ease-in-out ${infoExpanded ? 'h-2/3' : 'h-10'
+        className={`block sm:hidden z-[1000] absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg transition-all duration-300 ease-in-out ${infoExpanded ? 'h-2/3' : 'h-10'
           }`}
       >
         <div

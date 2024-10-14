@@ -51,7 +51,6 @@ function MapBar({ activeSection, onClick }: MapBarProps) {
       >
         <Satellite className="h-6 w-6" />
       </Button>
-      <p>Informacion</p>
     </div>
   )
 }
