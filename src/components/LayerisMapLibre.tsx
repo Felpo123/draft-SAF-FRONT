@@ -40,7 +40,7 @@ export type Section = 'infrastructure' | 'graphs' | 'resources' | 'satellite';
 interface LayerisMapLibreProps {
   nameEvent?: string
   idEvent?: string
-  geoJson: Geojson
+  geoJson?: Geojson
 }
 export type ControlOptions = {
   instant?: false
@@ -59,11 +59,11 @@ const LayerisMapLibre = ({
   const [maxDistance, setMaxDistance] = useState(0);
   const mapContainer = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<Map | null>(null)
-  const dates = extractDatesAndIds(geoJson).fechasUnicas;
-  const [incidentDates, setIncidentDates] = useState<string[]>(dates);
-  const lastDate = dates[dates.length - 1];
-  const [selectedDate, setSelectedDate] = useState(lastDate) // Índice de la fecha actual
-  const comunas = ['Todo el desastre', ...extractDatesAndComunas(geoJson).provinciasUnicas]
+  // const dates = extractDatesAndIds(geoJson).fechasUnicas;
+  // const [incidentDates, setIncidentDates] = useState<string[]>(dates);
+  // const lastDate = dates[dates.length - 1];
+  // const [selectedDate, setSelectedDate] = useState(lastDate) 
+  // const comunas = ['Todo el desastre', ...extractDatesAndComunas(geoJson).provinciasUnicas]
   const [selectedComuna, setSelectedComuna] = useState('Todo el desastre') // Provincia seleccionada
   const [superficieTotal, setSuperficieTotal] = useState(0) // Nueva variable para la suma de superf
   const [layersOpen, setLayersOpen] = useState(false)
@@ -111,8 +111,8 @@ const LayerisMapLibre = ({
 
 
   const [activeSection, setActiveSection] = useState({
-    infrastructure: false,
-    graphs: false,
+    infrastructure: true,
+    graphs: true,
     resources: false,
     satellite: false,
   })
@@ -521,21 +521,21 @@ const LayerisMapLibre = ({
               <SelectValue placeholder="Selecciona una provincia" />
             </SelectTrigger>
             <SelectContent className="z-[1000]">
-              {comunas.map((province) => (
+              {/* {comunas.map((province) => (
                 <SelectItem key={province} value={province}>
                   {province}
                 </SelectItem>
-              ))}
+              ))} */}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      <Timeline
+      {/* <Timeline
         dates={incidentDates}
         selectedDate={selectedDate}
         handleDateSelect={handleDateChange}
-      />
+      /> */}
 
       <MapBar activeSection={activeSection} onClick={toggleSection} />
 
@@ -550,10 +550,10 @@ const LayerisMapLibre = ({
           onClick={toggleInfo}
           aria-label={infoExpanded ? "Minimizar panel de información" : "Abrir panel de información"}
         >
-          <ChevronUp size={24} className={`transition-transform duration-300 ${infoExpanded ? 'rotate-180' : infoOpen ? '' : 'rotate-180'}`} />
+          <ChevronUp size={24} className={`transition-transform duration-300 ${infoExpanded ? 'rotate-180' : ''}`} />
         </div>
         {
-          infoExpanded && (
+          infoOpen && (
 
             <div className="p-4 overflow-y-auto h-[calc(100%-40px)]">
               <h2 className="text-2xl font-bold mb-6">Información del área</h2>
@@ -574,19 +574,12 @@ const LayerisMapLibre = ({
                   ))}
                 </div>
               </div>
-              <div className="mt-8">
+              <div className="mt-8 space-y-1">
                 <h3 className="text-xl font-semibold mb-4">Estadísticas demográficas</h3>
-                <div className="bg-gray-100 p-4 rounded-lg shadow flex items-center justify-between">
-                  <div className="p-4 flex space-x-4 bg-white rounded-sm ">
-                    <BarChartToMap />
-                  </div>
-                </div>
+                <BarChartToMap />
 
-                <div className="bg-gray-100 p-4 rounded-lg shadow flex items-center justify-between">
-                  <div className="p-4 flex space-x-4 bg-white rounded-sm ">
-                    <BarChartToMap />
-                  </div>
-                </div>
+                <BarChartToMap />
+
               </div>
             </div>
           )
