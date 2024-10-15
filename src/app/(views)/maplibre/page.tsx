@@ -23,12 +23,11 @@ async function MapLibrePage({
 
   const idEvent = searchParams?.idEvent || '01'
 
-  let geojsonData;
-  // = await fetchIncidentGEOJSON(idEvent)
+  const geojsonData = await fetchIncidentGEOJSON(idEvent)
 
-  // if (!geojsonData) {
-  //   return notFound()
-  // }
+  if (!geojsonData) {
+    return notFound()
+  }
 
   return (
     <Suspense key={idEvent} fallback={<LoadingSpinner />}>

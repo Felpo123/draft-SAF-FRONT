@@ -40,7 +40,7 @@ export type Section = 'infrastructure' | 'graphs' | 'resources' | 'satellite';
 interface LayerisMapLibreProps {
   nameEvent?: string
   idEvent?: string
-  geoJson?: Geojson
+  geoJson: Geojson
 }
 export type ControlOptions = {
   instant?: false
@@ -59,11 +59,11 @@ const LayerisMapLibre = ({
   const [maxDistance, setMaxDistance] = useState(0);
   const mapContainer = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<Map | null>(null)
-  // const dates = extractDatesAndIds(geoJson).fechasUnicas;
-  // const [incidentDates, setIncidentDates] = useState<string[]>(dates);
-  // const lastDate = dates[dates.length - 1];
-  // const [selectedDate, setSelectedDate] = useState(lastDate) 
-  // const comunas = ['Todo el desastre', ...extractDatesAndComunas(geoJson).provinciasUnicas]
+  const dates = extractDatesAndIds(geoJson).fechasUnicas;
+  const [incidentDates, setIncidentDates] = useState<string[]>(dates);
+  const lastDate = dates[dates.length - 1];
+  const [selectedDate, setSelectedDate] = useState(lastDate)
+  const comunas = ['Todo el desastre', ...extractDatesAndComunas(geoJson).provinciasUnicas]
   const [selectedComuna, setSelectedComuna] = useState('Todo el desastre') // Provincia seleccionada
   const [superficieTotal, setSuperficieTotal] = useState(0) // Nueva variable para la suma de superf
   const [layersOpen, setLayersOpen] = useState(false)
@@ -521,21 +521,21 @@ const LayerisMapLibre = ({
               <SelectValue placeholder="Selecciona una provincia" />
             </SelectTrigger>
             <SelectContent className="z-[1000]">
-              {/* {comunas.map((province) => (
+              {comunas.map((province) => (
                 <SelectItem key={province} value={province}>
                   {province}
                 </SelectItem>
-              ))} */}
+              ))}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      {/* <Timeline
+      <Timeline
         dates={incidentDates}
         selectedDate={selectedDate}
         handleDateSelect={handleDateChange}
-      /> */}
+      />
 
       <MapBar activeSection={activeSection} onClick={toggleSection} />
 
