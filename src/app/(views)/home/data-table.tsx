@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Edit3, FileText, LayoutDashboardIcon } from 'lucide-react'
+import { ClipboardList, Edit3, FileText, LayoutDashboardIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Incident } from '@/lib/data'
 import jsPDF from 'jspdf'
@@ -65,6 +65,8 @@ export function DataTable<TData, TValue>({
       header: () => <div className="text-center">Acciones</div>,
       cell: ({ row }) => {
         const incident = row.original as Feature
+        const state = incident.properties.estado === 'Activo';
+
         return (
           <div className="flex items-center justify-between space-x-2">
             {/* Icono para Editar */}
@@ -82,16 +84,17 @@ export function DataTable<TData, TValue>({
             </Button>
             {/* Icono para Ver Dashboard */}
             <Button
-              aria-label="View Dashboard"
+              aria-label={state ? "View Dashboard" : "View Report"}
               className="p-2 hover:bg-gray-200 rounded"
               variant="outline"
               onClick={() => {
+                const page = state ? '/maplibre' : '/reporte'
                 router.push(
-                  `/maplibre?idEvent=${incident.properties.id_evento}&name=${incident.properties.nom_event}`,
+                  `${page}?idEvent=${incident.properties.id_evento}&name=${incident.properties.nom_event}`,
                 )
               }}
             >
-              <LayoutDashboardIcon size={20} />
+              {state ? <LayoutDashboardIcon size={20} /> : <ClipboardList size={20} />}
             </Button>
             {/* Icono para Cargar */}
             <UploadButton />
@@ -166,9 +169,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   )
                 })}
@@ -181,9 +184,8 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className={`${
-                    rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                  } hover:bg-gray-100 transition-colors`}
+                  className={`${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    } hover:bg-gray-100 transition-colors`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell

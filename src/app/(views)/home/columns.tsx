@@ -12,6 +12,14 @@ export const columns: ColumnDef<Feature>[] = [
   {
     accessorKey: 'properties.estado',
     header: 'Estado',
+    cell: (row) => {
+      const value = row.getValue() as string;
+      if (value === 'Activo') {
+        return <span className="px-2 py-1 rounded-full bg-green-100 text-green-800">{value}</span>;
+      } else {
+        return <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">{value}</span>;
+      }
+    }
   },
   {
     accessorKey: 'properties.tipo_event',
