@@ -230,6 +230,8 @@ const LayerisMapLibre = ({
     if (mapRef.current) {
       const map = mapRef.current
 
+
+
       // Calcular la suma de la superficie ("superf") para la fecha seleccionada
       const superficieSum = geojsonData.features.reduce(
         (sum, feature) => sum + (feature.properties.superf || 0),
@@ -245,6 +247,10 @@ const LayerisMapLibre = ({
         map.flyTo({ center: centroid as maplibregl.LngLatLike, zoom: 12 });
       }
       const { maxDistance, circle } = getCircleFromMultiPolygon(geojsonData);
+
+      if (activeLayers.length > 0) {
+        updateActiveLayers(map, availableLayers, activeLayers, circle);
+      }
 
       setCircle(circle);
 
@@ -263,6 +269,7 @@ const LayerisMapLibre = ({
               'fill-color': '#007cbf',
               'fill-opacity': 0.8,
             },
+
           },
 
         );
@@ -288,9 +295,9 @@ const LayerisMapLibre = ({
         }
       }
 
-      if (activeLayers.length > 0) {
-        updateActiveLayers(map, availableLayers, activeLayers, circle);
-      }
+      map.moveLayer('polygons-layer');
+      map.moveLayer('polygon-borders');
+
     }
   };
 
@@ -357,10 +364,10 @@ const LayerisMapLibre = ({
     }
 
     // Aplicar un margen extra del 5%
-    if (maxDistance <= 1000){
-    adjustedDistance = maxDistance * 2.25;
-    }else{
-     adjustedDistance = maxDistance * 1.05;
+    if (maxDistance <= 1000) {
+      adjustedDistance = maxDistance * 2.25;
+    } else {
+      adjustedDistance = maxDistance * 1.05;
     }
 
     // Generar el círculo con la distancia ajustada
@@ -500,6 +507,7 @@ const LayerisMapLibre = ({
                 `http://192.168.1.116:8080/geoserver/desafio/wms?service=WMS&request=GetMap&layers=${layer.url}&styles=${layer.style}&format=image/png&transparent=true&version=1.1.1&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256&CQL_FILTER=${cqlFilter}`,
               ],
               tileSize: 256,
+
             });
 
             map.addLayer({
@@ -509,6 +517,8 @@ const LayerisMapLibre = ({
             });
           }
         }
+        map.moveLayer('polygons-layer');
+        map.moveLayer('polygon-borders');
       });
   }
 

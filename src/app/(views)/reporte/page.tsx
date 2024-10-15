@@ -1,8 +1,10 @@
 'use client'
 import { AreaChart } from '@/components/BarChart'
+import BarChartToMap from '@/components/BarChartToMap'
 import { DonutChart } from '@/components/DonutChart'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -23,6 +25,7 @@ import {
   AlertTriangle,
   Bell,
 } from 'lucide-react'
+import { useState } from 'react'
 
 const AreaData = [
   {
@@ -118,7 +121,84 @@ const DonutData = [
   },
 ]
 
+const comunas = ["Todas", "Santiago", "Concepción", "Valparaíso", "Viña del Mar", "La Serena"]
+
+const InfrastructureData = [
+  {
+    id: 1,
+    entity: 'Carabineros',
+    quantity: 100,
+    icon: '👮',
+    color: 'bg-blue-500',
+  },
+  {
+    id: 2,
+    entity: 'Bomberos',
+    quantity: 100,
+    icon: '🚒',
+    color: 'bg-white',
+  },
+  {
+    id: 4,
+    entity: 'Superfice Afectada (ha)',
+    quantity: 500, // Asumiendo un valor para superficieTotal
+    icon: '🌍',
+    color: 'bg-yellow-500',
+  },
+  {
+    id: 5,
+    entity: 'Recintos de Salud',
+    quantity: 75,
+    icon: '🏥',
+    color: 'bg-yellow-500',
+  },
+  {
+    id: 6,
+    entity: 'Edificaciones Afectadas',
+    quantity: 75,
+    icon: '🏚️',
+    color: 'bg-yellow-500',
+  },
+  {
+    id: 7,
+    entity: 'Establecimiento de Educacion',
+    quantity: 65,
+    icon: '🏫',
+    color: 'bg-yellow-500',
+  },
+  {
+    id: 8,
+    entity: 'Antenas de Servicio',
+    quantity: 10,
+    icon: '📡',
+    color: 'bg-yellow-500',
+  },
+  {
+    id: 9,
+    entity: 'Municipios',
+    quantity: 15,
+    icon: '🏛️',
+    color: 'bg-yellow-500',
+  },
+]
+
+const dates = [
+  '01-09-2021 12:43:02',
+  '02-09-2021 12:43:02',
+  '03-09-2021 12:43:02',
+  '04-09-2021 12:43:02',
+  '05-09-2021 12:43:02',
+  '06-09-2021 12:43:02',
+  '07-09-2021 12:43:02',
+  '08-09-2021 12:43:02',
+  '09-09-2021 12:43:02',
+  '10-09-2021 12:43:02',
+]
+
 export default function IncidentReportDashboard() {
+
+  const [selectedComuna, setSelectedComuna] = useState("")
+  const [selectedDate, setSelectedDate] = useState<string>("")
   return (
     <div className="container mx-auto p-6 space-y-6">
       <header className="flex justify-between items-center">
@@ -150,7 +230,7 @@ export default function IncidentReportDashboard() {
                 <TableCell>Valparaíso</TableCell>
                 <TableCell>
                   <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
-                    Activo
+                    Inactivo
                   </span>
                 </TableCell>
                 <TableCell>Incendio forestal en zona continental</TableCell>
@@ -160,117 +240,125 @@ export default function IncidentReportDashboard() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Superficie Afectada
-            </CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3626.45 KM</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Viviendas Afectadas
-            </CardTitle>
-            <Home className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">7642</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Establecimientos Afectados
-            </CardTitle>
-            <Building className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">424</div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader className='flex flex-row justify-between'>
+          <div>
+            <CardTitle className="text-2xl font-bold">Informacion del Incidente</CardTitle>
+            <CardDescription>Registro y datos relacionados con el incidente</CardDescription>
+          </div>
+          <div className="flex sm:flex-row flex-col justify-end space-x-4 space-y-1">
+            <Button variant="outline">
+              <Upload className="mr-2 h-4 w-4" />
+              <span className='hidden sm:block'>
+                Importar Información
+              </span>
+            </Button>
+            <Button variant="destructive">
+              <AlertTriangle className="mr-2 h-4 w-4" />
+              <span className='hidden sm:block'>
+                Finalizar Incidente
+              </span>
 
-      <Tabs defaultValue="image" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="image">Última Imagen</TabsTrigger>
-          <TabsTrigger value="zone">Zona Afectada</TabsTrigger>
-          <TabsTrigger value="people">Personas Afectadas</TabsTrigger>
-        </TabsList>
-        <TabsContent value="image" className="space-y-4">
-          <Card>
-            <CardContent className="p-3">
-              <img
-                src="/imgs/3.jpeg"
-                alt="Última imagen del incidente"
-                className="w-full  object-cover rounded-lg"
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="zone" className="space-y-4 ">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-center">
-                Gráfico Zona Afectada
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pl-2 flex justify-center">
-              <div className="w-3/4">
-                <AreaChart
-                  className="min-h-14 "
-                  data={AreaData}
-                  index="date"
-                  categories={['SolarPanels', 'Inverters']}
-                  valueFormatter={(number: number) =>
-                    `$${Intl.NumberFormat('us').format(number).toString()}`
-                  }
-                  onValueChange={(v) => console.log(v)}
-                  autoMinValue
-                />
+            </Button>
+            <Button className="bg-blue-600 text-white hover:bg-blue-700">
+              <Bell className="mr-2 h-4 w-4" />
+              <span className='hidden sm:block'>
+                Alerta
+              </span>
+
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <Tabs defaultValue="image" className="space-y-4">
+            <div className='flex justify-between'>
+              <div className='flex gap-2'>
+                <Select value={selectedComuna} onValueChange={setSelectedComuna}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Seleccionar comuna" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {comunas.map((comuna) => (
+                      <SelectItem key={comuna} value={comuna}>
+                        {comuna}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedDate} onValueChange={setSelectedDate}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Seleccionar Fecha" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dates.map((date) => (
+                      <SelectItem key={date} value={date}>
+                        {date}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="people" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-center">
-                Gráfico Personas Afectadas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pl-2">
-              <DonutChart
-                data={DonutData}
-                variant="pie"
-                category="name"
-                value="amount"
-                valueFormatter={(number: number) =>
-                  `$${Intl.NumberFormat('us').format(number).toString()}`
-                }
-                className="w-full h-80"
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
 
-      <div className="flex justify-end space-x-4">
-        <Button variant="outline">
-          <Upload className="mr-2 h-4 w-4" /> Importar Información
-        </Button>
-        <Button variant="destructive">
-          <AlertTriangle className="mr-2 h-4 w-4" /> Finalizar Incidente
-        </Button>
-        <Button className="bg-blue-600 text-white hover:bg-blue-700">
-          <Bell className="mr-2 h-4 w-4" /> Alerta
-        </Button>
-      </div>
+              <TabsList>
+                <TabsTrigger value="zone">Infraestructura</TabsTrigger>
+                <TabsTrigger value="people">Demografia</TabsTrigger>
+                <TabsTrigger value="image">Imagenes</TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value="zone" className="space-y-4 ">
+
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {InfrastructureData.map((item) => (
+                  <Card key={item.id} className="flex items-center p-4 space-x-4">
+                    <div className={`text-2xl ${item.color} rounded-full p-2`}>{item.icon}</div>
+                    <div>
+                      <h3 className="font-semibold">{item.entity}</h3>
+                      <p className="text-lg">{item.quantity}</p>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+
+
+            </TabsContent>
+            <TabsContent value="image" className="space-y-4">
+              <Card>
+                <CardContent className="p-3 flex flex-wrap gap-2">
+                  <img
+                    src="/imgs/3.jpeg"
+                    alt="Última imagen del incidente"
+                    className="w-66 h-96  object-cover rounded-lg"
+                  />
+                  <img
+                    src="/imgs/3.jpeg"
+                    alt="Última imagen del incidente"
+                    className="w-66 h-96  object-cover rounded-lg"
+                  />
+                  <img
+                    src="/imgs/3.jpeg"
+                    alt="Última imagen del incidente"
+                    className="w-66 h-96  object-cover rounded-lg"
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="people" className="space-y-4">
+              <div className='flex justify-center'>
+                <div className="p-2 rounded-lg  ">
+                  <BarChartToMap />
+                </div>
+                <div className=" p-2  rounded-lg ">
+                  <BarChartToMap />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+
+      </Card>
     </div>
   )
 }
