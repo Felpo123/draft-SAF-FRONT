@@ -314,7 +314,7 @@ const LayerisMapLibre = ({
     }
 
 
-
+    let adjustedDistance
     let maxDistance = 0;
     let validPoints = 0;
 
@@ -357,8 +357,11 @@ const LayerisMapLibre = ({
     }
 
     // Aplicar un margen extra del 5%
-    const adjustedDistance = maxDistance * 2.05;
-
+    if (maxDistance <= 1000){
+    adjustedDistance = maxDistance * 2.25;
+    }else{
+     adjustedDistance = maxDistance * 1.05;
+    }
 
     // Generar el círculo con la distancia ajustada
     const circle = turf.circle(centroidCoords, adjustedDistance, { steps: 100, units: 'meters' });
