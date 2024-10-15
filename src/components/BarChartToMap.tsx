@@ -23,7 +23,7 @@ function BarChartToMap() {
       <BarChart
         className="xl:h-[500px] xl:w-[400px] sm:h-[400px] sm:w-[300px] h-[300px] w-[250px]"
         data={chartdata}
-        colors={['blue']} // Color azul suave
+        colors={['blue']}
         index="category"
         categories={['value']}
         valueFormatter={(number: number) =>

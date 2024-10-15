@@ -85,6 +85,7 @@ const renderShape = (
             : 0.3
           : fillOpacity
       }
+      color='#ffffff'
     />
   )
 }

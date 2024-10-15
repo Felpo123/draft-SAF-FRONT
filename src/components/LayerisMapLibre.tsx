@@ -32,6 +32,7 @@ import TooltipControl from '@mapbox-controls/tooltip';
 import '@mapbox-controls/tooltip/src/index.css'
 import proj4 from 'proj4';
 import { set } from 'zod'
+import { map } from 'leaflet'
 
 const epsg4326 = 'EPSG:4326'; // Sistema geográfico (lon, lat)
 const epsg3857 = 'EPSG:3857'; // Web Mercator
@@ -44,6 +45,13 @@ interface LayerisMapLibreProps {
 }
 export type ControlOptions = {
   instant?: false
+}
+
+export interface Layer {
+  id: string
+  name: string
+  url: string
+  style: string
 }
 
 const LayerisMapLibre = ({
@@ -142,7 +150,7 @@ const LayerisMapLibre = ({
 
     {
       id: 4,
-      entity: 'Superfice Afectada (km²)',
+      entity: 'Superfice Afectada (ha)',
       quantity: superficieTotal,
       icon: '🌍',
       color: 'bg-yellow-500',
@@ -206,7 +214,7 @@ const LayerisMapLibre = ({
     },
     { id: 'viviendas', name: 'Viviendas', url: 'desafio:viviendas', style: '' },
     { id: 'redvial', name: 'Red Vial', url: 'desafio:redvial', style: '' },
-  ]
+  ] as Layer[]
 
   const handleLayerToggle = (layerId: string) => {
     setActiveLayers((current) =>
@@ -278,6 +286,10 @@ const LayerisMapLibre = ({
         if (source && (source as GeoJSONSource).setData) {
           ; (source as GeoJSONSource).setData(geojsonData)
         }
+      }
+
+      if (activeLayers.length > 0) {
+        updateActiveLayers(map, availableLayers, activeLayers, circle);
       }
     }
   };
@@ -432,52 +444,12 @@ const LayerisMapLibre = ({
   }, [])
 
   useEffect(() => {
-    if (mapRef.current) {
+    const map = mapRef.current;
+    if (map) {
       // Obtener todas las capas que ya no están activas y eliminarlas del mapa
-      availableLayers.forEach((layer) => {
-        if (!activeLayers.includes(layer.id)) {
-          if (mapRef.current.getLayer(layer.id)) {
-            mapRef.current.removeLayer(layer.id)
-          }
-          if (mapRef.current.getSource(layer.id)) {
-            mapRef.current.removeSource(layer.id)
-          }
-        }
-      })
-
-      // Agregar las nuevas capas activas
-      availableLayers
-        .filter((layer) => activeLayers.includes(layer.id))
-        .forEach((layer) => {
-          if (circle) {
-            const geom = turf.getGeom(circle);
-            const coords = turf.getCoords(geom)[0]; // Suponiendo que es un polígono
-            coords.push(coords[0]); // Cerrar el polígono
-
-            // Obtener el filtro CQL con las coordenadas convertidas
-            const cqlFilter = getCqlFilterForWms(coords);
-            // Verificar si la capa ya está agregada antes de añadirla
-            if (!mapRef.current.getSource(layer.id)) {
-              // Añadir la fuente raster
-              mapRef.current.addSource(layer.id, {
-                type: 'raster',
-                tiles: [
-                  `http://192.168.1.116:8080/geoserver/desafio/wms?service=WMS&request=GetMap&layers=${layer.url}&styles=${layer.style}&format=image/png&transparent=true&version=1.1.1&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256&CQL_FILTER=${cqlFilter}`,
-
-                ],
-                tileSize: 256, // Limitar la visualización usando el bounding box
-              });
-
-              // Añadir la capa raster
-              mapRef.current.addLayer({
-                id: layer.id,
-                type: 'raster',
-                source: layer.id,
-              });
-            }
-
-          }
-        });
+      removeInactiveLayers(map, availableLayers, activeLayers);
+      // Agregar todas las capas activas al mapa
+      addActiveLayers(map, availableLayers, activeLayers, circle);
     }
   }, [activeLayers, availableLayers]);
 
@@ -493,6 +465,65 @@ const LayerisMapLibre = ({
 
   const [infoOpen, setInfoOpen] = useState(false)
   const [infoExpanded, setInfoExpanded] = useState(false)
+
+  function removeInactiveLayers(map: maplibregl.Map, availableLayers: Layer[], activeLayers: string[]) {
+    availableLayers.forEach((layer) => {
+      if (!activeLayers.includes(layer.id)) {
+        if (map.getLayer(layer.id)) {
+          map.removeLayer(layer.id);
+        }
+        if (map.getSource(layer.id)) {
+          map.removeSource(layer.id);
+        }
+      }
+    });
+  }
+
+  function addActiveLayers(map: maplibregl.Map, availableLayers: Layer[], activeLayers: string[], circle: CircleType) {
+    availableLayers
+      .filter((layer) => activeLayers.includes(layer.id))
+      .forEach((layer) => {
+        if (circle) {
+          const geom = turf.getGeom(circle);
+          const coords = turf.getCoords(geom)[0];
+          coords.push(coords[0]);
+
+          const cqlFilter = getCqlFilterForWms(coords); // Asegúrate de que esta función esté bien tipada
+
+          if (!map.getSource(layer.id)) {
+            map.addSource(layer.id, {
+              type: 'raster',
+              tiles: [
+                `http://192.168.1.116:8080/geoserver/desafio/wms?service=WMS&request=GetMap&layers=${layer.url}&styles=${layer.style}&format=image/png&transparent=true&version=1.1.1&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256&CQL_FILTER=${cqlFilter}`,
+              ],
+              tileSize: 256,
+            });
+
+            map.addLayer({
+              id: layer.id,
+              type: 'raster',
+              source: layer.id,
+            });
+          }
+        }
+      });
+  }
+
+  function updateActiveLayers(map: maplibregl.Map, availableLayers: Layer[], activeLayers: string[], circle: CircleType) {
+    //REMOVE ACTIVE LAYER
+    availableLayers.forEach((layer) => {
+      if (activeLayers.includes(layer.id)) {
+        if (map.getLayer(layer.id)) {
+          map.removeLayer(layer.id);
+        }
+        if (map.getSource(layer.id)) {
+          map.removeSource(layer.id);
+        }
+      }
+    });
+    addActiveLayers(map, availableLayers, activeLayers, circle);
+  }
+
 
   return (
     <div className="h-full w-full relative">
