@@ -1,6 +1,7 @@
 'use client'
+import { useToast } from '@/hooks/use-toast'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 interface TimelineMapBarProps {
   dates: string[]
@@ -13,6 +14,20 @@ const Timeline = ({
   selectedDate,
   handleDateSelect,
 }: TimelineMapBarProps) => {
+  const { toast } = useToast()
+
+  useEffect(() => {
+    if (!dates.includes(selectedDate)) {
+      toast({
+        title: 'Info',
+        description: `El incidente seleccionado no tiene datos para esta fecha, se seleccionará la fecha más cercana. (${dates[0]})`,
+        variant: 'default',
+      })
+      handleDateSelect(dates[0])
+    }
+  }, [dates])
+
+
   return (
     <div className="absolute sm:top-4 sm:left-4 top-0 left-0 p-2 max-sm:w-1/4" style={{ zIndex: 1000 }}>
       <div className="flex items-center space-x-2 ">
