@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { ClipboardList, Edit3, FileText, LayoutDashboardIcon } from 'lucide-react'
+import { ClipboardList, Edit3, FileText, LayoutDashboardIcon, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Incident } from '@/lib/data'
 import jsPDF from 'jspdf'
@@ -27,6 +27,7 @@ import UploadButton from '@/components/UploadButton'
 import React from 'react'
 import { Input } from '@/components/ui/input'
 import { Feature } from '@/lib/mapUtils'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -41,6 +42,7 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   )
+  const [stateFilter, setStateFilter] = React.useState<string | null>(null)
 
   //add action column
 
@@ -130,24 +132,52 @@ export function DataTable<TData, TValue>({
     },
   })
 
+  const handleStateFilterChange = (value: string) => {
+    if (value === "") {
+      setStateFilter(null)
+      table.getColumn('properties_estado')?.setFilterValue(undefined)
+    } else {
+      setStateFilter(value)
+      table.getColumn('properties_estado')?.setFilterValue(value)
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between py-4 gap-4">
-        <Input
-          placeholder="Filter names..."
-          value={
-            (table
-              .getColumn('properties_nom_event')
-              ?.getFilterValue() as string) ?? ''
-          }
-          onChange={(event) =>
-            table
-              .getColumn('properties_nom_event')
-              ?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-
+        <div className="flex gap-2">
+          <Input
+            placeholder="Filtrar por nombre..."
+            value={(table.getColumn('properties_nom_event')?.getFilterValue() as string) ?? ''}
+            onChange={(event) =>
+              table.getColumn('properties_nom_event')?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+          <div className="relative">
+            <Select
+              onValueChange={handleStateFilterChange}
+              value={stateFilter || ""}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Activo">Activo</SelectItem>
+                <SelectItem value="Apagado">Apagado</SelectItem>
+              </SelectContent>
+            </Select>
+            {stateFilter && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-full"
+                onClick={() => handleStateFilterChange("")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
         <Button
           className="rounded-sm bg-blue-500 text-white hover:bg-blue-600 w-40 flex-initial"
           onClick={() => router.push('/incidente?action=create')}

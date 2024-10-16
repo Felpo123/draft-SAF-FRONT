@@ -25,104 +25,39 @@ import {
     Upload,
     AlertTriangle,
     Bell,
+    FileIcon,
+    CalendarIcon,
+    FileUpIcon,
 } from 'lucide-react'
 import { useState } from 'react'
 
-const AreaData = [
-    {
-        date: 'Jan 23',
-        SolarPanels: 2890,
-        Inverters: 2338,
-    },
-    {
-        date: 'Feb 23',
-        SolarPanels: 2756,
-        Inverters: 2103,
-    },
-    {
-        date: 'Mar 23',
-        SolarPanels: 3322,
-        Inverters: 2194,
-    },
-    {
-        date: 'Apr 23',
-        SolarPanels: 3470,
-        Inverters: 2108,
-    },
-    {
-        date: 'May 23',
-        SolarPanels: 3475,
-        Inverters: 1812,
-    },
-    {
-        date: 'Jun 23',
-        SolarPanels: 3129,
-        Inverters: 1726,
-    },
-    {
-        date: 'Jul 23',
-        SolarPanels: 3490,
-        Inverters: 1982,
-    },
-    {
-        date: 'Aug 23',
-        SolarPanels: 2903,
-        Inverters: 2012,
-    },
-    {
-        date: 'Sep 23',
-        SolarPanels: 2643,
-        Inverters: 2342,
-    },
-    {
-        date: 'Oct 23',
-        SolarPanels: 2837,
-        Inverters: 2473,
-    },
-    {
-        date: 'Nov 23',
-        SolarPanels: 2954,
-        Inverters: 3848,
-    },
-    {
-        date: 'Dec 23',
-        SolarPanels: 3239,
-        Inverters: 3736,
-    },
-]
+interface FileCardProps {
+    fileName: string
+    uploadDate: string
+}
 
-const DonutData = [
-    {
-        name: 'SolarCells',
-        amount: 4890,
-    },
-    {
-        name: 'Glass',
-        amount: 2103,
-    },
-    {
-        name: 'JunctionBox',
-        amount: 2050,
-    },
-    {
-        name: 'Adhesive',
-        amount: 1300,
-    },
-    {
-        name: 'BackSheet',
-        amount: 1100,
-    },
-    {
-        name: 'Frame',
-        amount: 700,
-    },
-    {
-        name: 'Encapsulant',
-        amount: 200,
-    },
-]
-
-const comunas = ["Todas", "Santiago", "Concepción", "Valparaíso", "Viña del Mar", "La Serena"]
+export function FileCard({ fileName, uploadDate }: FileCardProps) {
+    return (
+        <Card className="w-full max-w-sm">
+            <CardContent className="p-4">
+                <div className="flex items-center space-x-4">
+                    <div className="bg-primary/10 p-2 rounded-full">
+                        <FileUpIcon className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate cursor-pointer">
+                            {fileName}
+                        </p>
+                        <div className="flex items-center text-xs text-gray-500 mt-1">
+                            <CalendarIcon className="h-3 w-3 mr-1" />
+                            <span>{uploadDate}</span>
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
 
 const InfrastructureData = [
     {
@@ -317,7 +252,7 @@ export default function IncidentReportDashboard({ geoJson }: IncidentReportDashb
                             <TabsList>
                                 <TabsTrigger value="zone">Infraestructura</TabsTrigger>
                                 <TabsTrigger value="people">Demografia</TabsTrigger>
-                                <TabsTrigger value="image">Imagenes</TabsTrigger>
+                                <TabsTrigger value="document">Documentos</TabsTrigger>
                             </TabsList>
                         </div>
                         <TabsContent value="zone" className="space-y-4 ">
@@ -337,24 +272,25 @@ export default function IncidentReportDashboard({ geoJson }: IncidentReportDashb
 
 
                         </TabsContent>
-                        <TabsContent value="image" className="space-y-4">
+                        <TabsContent value="document" className="space-y-4">
                             <Card>
-                                <CardContent className="p-3 flex flex-wrap gap-2">
-                                    <img
-                                        src="/imgs/3.jpeg"
-                                        alt="Última imagen del incidente"
-                                        className="w-66 h-96  object-cover rounded-lg"
-                                    />
-                                    <img
-                                        src="/imgs/3.jpeg"
-                                        alt="Última imagen del incidente"
-                                        className="w-66 h-96  object-cover rounded-lg"
-                                    />
-                                    <img
-                                        src="/imgs/3.jpeg"
-                                        alt="Última imagen del incidente"
-                                        className="w-66 h-96  object-cover rounded-lg"
-                                    />
+                                <CardContent className="p-3">
+                                    <div className='flex gap-5'>
+                                        <img
+                                            src="/imgs/3.jpeg"
+                                            alt="Última imagen del incidente"
+                                            className="w-66 h-96  object-cover rounded-lg"
+                                        />
+                                        {
+                                            <div className='space-y-2'>
+                                                <FileCard fileName='documento-importante.pdf' uploadDate='2023-02-12' />
+                                                <FileCard fileName='documento-importante.pdf' uploadDate='2023-02-12' />
+                                                <FileCard fileName='documento-importante.pdf' uploadDate='2023-02-12' />
+                                                <FileCard fileName='documento-importante.pdf' uploadDate='2023-02-12' />
+                                            </div>
+                                        }
+                                    </div>
+
                                 </CardContent>
                             </Card>
                         </TabsContent>
