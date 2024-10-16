@@ -11,7 +11,6 @@ import {
   extractDatesAndComunas,
   extractDatesAndIds,
   Geojson,
-  getCentroidAndBBox,
   weatherInfo,
 } from '@/lib/mapUtils'
 import { Building, ChevronUp, Coffee, Hotel, LayersIcon, MapPin, ShoppingBag, Users, Utensils } from 'lucide-react'
@@ -23,16 +22,13 @@ import {
   SelectValue,
 } from './ui/select'
 import { Feature, Polygon, GeoJsonProperties } from 'geojson';
-import RulerControl from '@mapbox-controls/ruler'
 import '@mapbox-controls/ruler/src/index.css'
 import '@mapbox-controls/compass/src/index.css'
 import * as turf from '@turf/turf'
 import BarChartToMap from './BarChartToMap'
-import TooltipControl from '@mapbox-controls/tooltip';
 import '@mapbox-controls/tooltip/src/index.css'
 import proj4 from 'proj4';
-import { set } from 'zod'
-import { map } from 'leaflet'
+import { WKT } from 'terraformer-wkt-parser';
 
 const epsg4326 = 'EPSG:4326'; // Sistema geográfico (lon, lat)
 const epsg3857 = 'EPSG:3857'; // Web Mercator
@@ -61,10 +57,7 @@ const LayerisMapLibre = ({
 }: LayerisMapLibreProps) => {
   type CircleType = Feature<Polygon, GeoJsonProperties> | null;
 
-
   const [circle, setCircle] = useState<CircleType>(null);
-  const [centroidse, setCentroidse] = useState([]);
-  const [maxDistance, setMaxDistance] = useState(0);
   const mapContainer = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<Map | null>(null)
   const dates = extractDatesAndIds(geoJson).fechasUnicas;
@@ -379,8 +372,6 @@ const LayerisMapLibre = ({
     return { centroid: centroidCoords, maxDistance: adjustedDistance, circle };
   };
 
-
-
   const handleDateChange = (timelineDate?: string) => {
     let incidentDate;
 
@@ -402,6 +393,9 @@ const LayerisMapLibre = ({
     updateMapWithGeojson(filteredData);
   }
 
+ 
+
+  
   const convertCoordsTo3857 = (coords) => {
     return coords.map(coord => proj4(epsg4326, epsg3857, coord));
   };
@@ -414,6 +408,57 @@ const LayerisMapLibre = ({
 
     return cqlFilter;
   };
+  const handleMapClick = async (e) => {
+    const { lng, lat } = e.lngLat;
+
+    // Crear un punto usando Turf.js
+    const point = turf.point([lng, lat]);
+
+    // Generar un buffer de 100 metros alrededor del punto (ajusta según sea necesario)
+    const buffered = turf.buffer(point, 0.1, { units: 'kilometers' });
+
+    // Convertir el buffer a formato WKT (Well-Known Text) usando Terraformer
+    const wktBuffer = WKT.convert(buffered);
+
+    // Realizar consulta WFS a GeoServer
+    const wfsUrl = 'http://192.168.1.116:8080//geoserver/wfs'; // Cambia esto a la URL de tu GeoServer
+    const layerName = 'desafio:'; // Cambia esto al nombre de tu capa
+    const query = `
+      <wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs"
+        xmlns:ogc="http://www.opengis.net/ogc"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <wfs:Query typeName="${layerName}">
+          <ogc:Filter>
+            <ogc:Intersects>
+              <ogc:PropertyName>geom</ogc:PropertyName> <!-- Cambia 'geom' al nombre de tu geometría -->
+              <ogc:Geometry>${wktBuffer}</ogc:Geometry>
+            </ogc:Intersects>
+          </ogc:Filter>
+        </wfs:Query>
+      </wfs:FeatureCollection>
+    `;
+
+    // Hacer la solicitud WFS
+    try {
+      const response = await fetch(wfsUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml',
+        },
+        body: query,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.text();
+      console.log('Resultados de WFS:', result);
+    } catch (error) {
+      console.error('Error al realizar la consulta WFS:', error);
+    }
+  };
+
   useEffect(() => {
     if (mapContainer.current && !mapRef.current) {
       mapRef.current = new maplibregl.Map({
@@ -440,16 +485,13 @@ const LayerisMapLibre = ({
         center: [-72.605348, -38.747434],
         zoom: 10,
       });
-
-      mapRef.current.addControl(new RulerControl, 'bottom-right');
-
-
-
       mapRef.current.on('load', () => {
         mapRef.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
 
         handleDateChange(); // Llamar a handleDateChange una vez que el estilo esté cargado
-      });
+      },
+    );
+    mapRef.current.on('click', handleMapClick)
     }
   }, [])
 
