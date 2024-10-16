@@ -2,9 +2,10 @@ import { LoadingSpinner } from '@/components/Loader'
 import { Suspense } from 'react'
 import { date, number } from 'zod'
 import dynamic from 'next/dynamic'
-import { extractDatesAndIds, fetchIncidentGEOJSON } from '@/lib/mapUtils'
+import { extractDatesAndIds, fetchIncidentGEOJSON, Geojson } from '@/lib/mapUtils'
 import { notFound } from 'next/navigation'
 import IncidentReportDashboard from '@/components/ReportPage'
+import { geoserverApi } from '@/lib/api/geoserver/geoserverApi'
 
 async function MapLibrePage({
   searchParams,
@@ -18,7 +19,7 @@ async function MapLibrePage({
 
   const idEvent = searchParams?.idEvent || '01'
 
-  const geojsonData = await fetchIncidentGEOJSON(idEvent)
+  const geojsonData = await geoserverApi.getIncidentsByIDEvent(idEvent)
 
   if (!geojsonData) {
     return notFound()

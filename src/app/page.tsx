@@ -1,44 +1,40 @@
 // src/app/login/page.tsx
-"use client";
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation'; // Asegúrate de importar desde 'next/navigation'
+'use client'
+import React, { useState } from 'react'
+import { useRouter } from 'next/navigation' // Asegúrate de importar desde 'next/navigation'
+import { geoserverApi } from '@/lib/api/geoserver/geoserverApi'
 
 const LoginPage = () => {
   // Estado para el nombre de usuario, contraseña y posibles errores
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const router = useRouter();
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const router = useRouter()
 
   const handleLogin = async (e) => {
-    e.preventDefault(); // Evitar el comportamiento por defecto del formulario
+    e.preventDefault() // Evitar el comportamiento por defecto del formulario
 
     // Realizar la autenticación contra GeoServer
-    const isAuthenticated = await authenticateUser(username, password);
+    const isAuthenticated = await authenticateUser(username, password)
 
     if (isAuthenticated) {
       // Almacenar las credenciales en localStorage
-      localStorage.setItem('geoServerUser', username);
-      localStorage.setItem('geoServerPass', password);
+      localStorage.setItem('geoServerUser', username)
+      localStorage.setItem('geoServerPass', password)
       // Redirigir a la página /home
-      router.push('/home'); // Cambia esto a la página que desees
+      router.push('/home') // Cambia esto a la página que desees
     } else {
-      setError('Credenciales incorrectas. Intenta de nuevo.');
+      setError('Credenciales incorrectas. Intenta de nuevo.')
     }
-  };
+  }
 
   // Función para autenticar al usuario con GeoServer
   const authenticateUser = async (username, password) => {
-    const response = await fetch('http://192.168.1.116:8080/geoserver/rest/workspaces', {
-      method: 'GET',
-      headers: {
-        'Authorization': 'Basic ' + btoa(`${username}:${password}`), // Autenticación básica
-        'Accept': 'application/json'
-      }
-    });
-
-    return response.ok; // Devuelve true si la respuesta es 200-299
-  };
+    const auth = await geoserverApi.authenticate(username, password);
+    if (auth) {
+      return true;
+    }
+  }
 
   return (
     <main className="md:flex h-screen">
@@ -117,11 +113,12 @@ const LoginPage = () => {
           </a>
         </div>
         <p className="text-center text-white text-lg w-3/4 absolute bottom-0 mb-3">
-          RP23I30007 - Sistema Geoespacial de Apoyo a la Toma de Decisión en Situación de Emergencia
+          RP23I30007 - Sistema Geoespacial de Apoyo a la Toma de Decisión en
+          Situación de Emergencia
         </p>
       </div>
     </main>
-  );
+  )
 }
 
-export default LoginPage;
+export default LoginPage
