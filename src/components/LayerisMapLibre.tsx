@@ -1,32 +1,42 @@
-'use client'
-import 'maplibre-gl/dist/maplibre-gl.css'
-import maplibregl, { GeoJSONSource, Map } from 'maplibre-gl'
-import React, { useEffect, useRef, useState } from 'react'
-import InfraestructureCard from './InfraestructureCard'
-import GraphsCard from './GraphsCard'
-import MapBar from './MapBar'
-import WeatherCard from './WeatherCard'
-import Timeline from './TimelineMapBar'
+'use client';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import maplibregl, { GeoJSONSource, Map } from 'maplibre-gl';
+import React, { useEffect, useRef, useState } from 'react';
+import InfraestructureCard from './InfraestructureCard';
+import GraphsCard from './GraphsCard';
+import MapBar from './MapBar';
+import WeatherCard from './WeatherCard';
+import Timeline from './TimelineMapBar';
 import {
   extractDatesAndComunas,
   extractDatesAndIds,
   Geojson,
   weatherInfo,
-} from '@/lib/mapUtils'
-import { Building, ChevronUp, Coffee, Hotel, LayersIcon, MapPin, ShoppingBag, Users, Utensils } from 'lucide-react'
+} from '@/lib/mapUtils';
+import {
+  Building,
+  ChevronUp,
+  Coffee,
+  Hotel,
+  LayersIcon,
+  MapPin,
+  ShoppingBag,
+  Users,
+  Utensils,
+} from 'lucide-react';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select'
+} from './ui/select';
 import { Feature, Polygon, GeoJsonProperties } from 'geojson';
-import '@mapbox-controls/ruler/src/index.css'
-import '@mapbox-controls/compass/src/index.css'
-import * as turf from '@turf/turf'
-import BarChartToMap from './BarChartToMap'
-import '@mapbox-controls/tooltip/src/index.css'
+import '@mapbox-controls/ruler/src/index.css';
+import '@mapbox-controls/compass/src/index.css';
+import * as turf from '@turf/turf';
+import BarChartToMap from './BarChartToMap';
+import '@mapbox-controls/tooltip/src/index.css';
 import proj4 from 'proj4';
 import { WKT } from 'terraformer-wkt-parser';
 
@@ -35,19 +45,19 @@ const epsg3857 = 'EPSG:3857'; // Web Mercator
 export type Section = 'infrastructure' | 'graphs' | 'resources' | 'satellite';
 
 interface LayerisMapLibreProps {
-  nameEvent?: string
-  idEvent?: string
-  geoJson: Geojson
+  nameEvent?: string;
+  idEvent?: string;
+  geoJson: Geojson;
 }
 export type ControlOptions = {
-  instant?: false
-}
+  instant?: false;
+};
 
 export interface Layer {
-  id: string
-  name: string
-  url: string
-  style: string
+  id: string;
+  name: string;
+  url: string;
+  style: string;
 }
 
 const LayerisMapLibre = ({
@@ -58,19 +68,20 @@ const LayerisMapLibre = ({
   type CircleType = Feature<Polygon, GeoJsonProperties> | null;
 
   const [circle, setCircle] = useState<CircleType>(null);
-  const mapContainer = useRef<HTMLDivElement | null>(null)
-  const mapRef = useRef<Map | null>(null)
+  const mapContainer = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<Map | null>(null);
   const dates = extractDatesAndIds(geoJson).fechasUnicas;
   const [incidentDates, setIncidentDates] = useState<string[]>(dates);
   const lastDate = dates[dates.length - 1];
-  const [selectedDate, setSelectedDate] = useState(lastDate)
-  const comunas = ['Todo el desastre', ...extractDatesAndComunas(geoJson).provinciasUnicas]
-  const [selectedComuna, setSelectedComuna] = useState('Todo el desastre') // Provincia seleccionada
-  const [superficieTotal, setSuperficieTotal] = useState(0) // Nueva variable para la suma de superf
-  const [layersOpen, setLayersOpen] = useState(false)
-  const [activeLayers, setActiveLayers] = useState<string[]>([])
-
-
+  const [selectedDate, setSelectedDate] = useState(lastDate);
+  const comunas = [
+    'Todo el desastre',
+    ...extractDatesAndComunas(geoJson).provinciasUnicas,
+  ];
+  const [selectedComuna, setSelectedComuna] = useState('Todo el desastre'); // Provincia seleccionada
+  const [superficieTotal, setSuperficieTotal] = useState(0); // Nueva variable para la suma de superf
+  const [layersOpen, setLayersOpen] = useState(false);
+  const [activeLayers, setActiveLayers] = useState<string[]>([]);
 
   const handleProvinciaChange = (selectedComuna: string) => {
     setSelectedComuna(selectedComuna);
@@ -78,8 +89,12 @@ const LayerisMapLibre = ({
     // Verificar si se seleccionó una comuna específica
     if (selectedComuna !== 'Todo el desastre') {
       const incidentDates = geoJson.features
-        .filter(feature => dates.includes(feature.properties.date) && feature.properties.nom_com === selectedComuna)
-        .map(feature => feature.properties.date)
+        .filter(
+          (feature) =>
+            dates.includes(feature.properties.date) &&
+            feature.properties.nom_com === selectedComuna
+        )
+        .map((feature) => feature.properties.date)
         .sort();
 
       setIncidentDates(incidentDates);
@@ -88,9 +103,10 @@ const LayerisMapLibre = ({
       const filteredData = {
         ...geoJson,
         features: geoJson.features.filter(
-          feature =>
+          (feature) =>
             feature.properties.nom_com === selectedComuna &&
-            new Date(feature.properties.date).toISOString().slice(0, 10) === new Date(selectedDate).toISOString().slice(0, 10)
+            new Date(feature.properties.date).toISOString().slice(0, 10) ===
+              new Date(selectedDate).toISOString().slice(0, 10)
         ),
       };
 
@@ -102,7 +118,9 @@ const LayerisMapLibre = ({
       const filteredData = {
         ...geoJson,
         features: geoJson.features.filter(
-          feature => new Date(feature.properties.date).toISOString().slice(0, 10) === new Date(selectedDate).toISOString().slice(0, 10)
+          (feature) =>
+            new Date(feature.properties.date).toISOString().slice(0, 10) ===
+            new Date(selectedDate).toISOString().slice(0, 10)
         ),
       };
 
@@ -110,20 +128,19 @@ const LayerisMapLibre = ({
     }
   };
 
-
   const [activeSection, setActiveSection] = useState({
     infrastructure: true,
     graphs: true,
     resources: false,
     satellite: false,
-  })
+  });
 
   const toggleSection = (section: Section) => {
     setActiveSection((current) => ({
       ...current,
       [section]: !current[section],
-    }))
-  }
+    }));
+  };
 
   const InfrastructureData = [
     {
@@ -183,7 +200,7 @@ const LayerisMapLibre = ({
       icon: '🏛️',
       color: 'bg-yellow-500',
     },
-  ]
+  ];
 
   const availableLayers = [
     {
@@ -207,7 +224,7 @@ const LayerisMapLibre = ({
     },
     { id: 'viviendas', name: 'Viviendas', url: 'desafio:viviendas', style: '' },
     { id: 'redvial', name: 'Red Vial', url: 'desafio:redvial', style: '' },
-  ] as Layer[]
+  ] as Layer[];
 
   const handleLayerToggle = (layerId: string) => {
     setActiveLayers((current) =>
@@ -217,20 +234,16 @@ const LayerisMapLibre = ({
     );
   };
 
-
-
   const updateMapWithGeojson = (geojsonData: Geojson) => {
     if (mapRef.current) {
-      const map = mapRef.current
-
-
+      const map = mapRef.current;
 
       // Calcular la suma de la superficie ("superf") para la fecha seleccionada
       const superficieSum = geojsonData.features.reduce(
         (sum, feature) => sum + (feature.properties.superf || 0),
-        0,
-      )
-      setSuperficieTotal(superficieSum) // Actualizar el estado con la suma de superficies
+        0
+      );
+      setSuperficieTotal(superficieSum); // Actualizar el estado con la suma de superficies
 
       // Si hay un polígono coincidente, centrar el mapa en su centroide
       const matchingFeature = geojsonData.features[0]; // Obtener el primer polígono correspondiente a la fecha
@@ -251,55 +264,44 @@ const LayerisMapLibre = ({
         map.addSource('geojson-source', {
           type: 'geojson',
           data: geojsonData,
-        })
+        });
 
-        map.addLayer(
-          {
-            id: 'polygons-layer',
-            type: 'fill',
-            source: 'geojson-source',
-            paint: {
-              'fill-color': '#007cbf',
-              'fill-opacity': 0.8,
-            },
-
+        map.addLayer({
+          id: 'polygons-layer',
+          type: 'fill',
+          source: 'geojson-source',
+          paint: {
+            'fill-color': '#007cbf',
+            'fill-opacity': 0.8,
           },
+        });
 
-        );
-
-
-        map.addLayer(
-          {
-            id: 'polygon-borders',
-            type: 'line',
-            source: 'geojson-source',
-            paint: {
-              'line-color': '#ffffff',
-              'line-width': 3,
-              'line-opacity': 0.9,
-            },
+        map.addLayer({
+          id: 'polygon-borders',
+          type: 'line',
+          source: 'geojson-source',
+          paint: {
+            'line-color': '#ffffff',
+            'line-width': 3,
+            'line-opacity': 0.9,
           },
-
-        );
+        });
       } else {
-        const source = map.getSource('geojson-source')
+        const source = map.getSource('geojson-source');
         if (source && (source as GeoJSONSource).setData) {
-          ; (source as GeoJSONSource).setData(geojsonData)
+          (source as GeoJSONSource).setData(geojsonData);
         }
       }
 
       map.moveLayer('polygons-layer');
       map.moveLayer('polygon-borders');
-
     }
   };
 
   const getCircleFromMultiPolygon = (geojson) => {
-
-
     // Verificar que existan características
     if (!geojson.features || !geojson.features.length) {
-      console.warn("No features available in the geojson.");
+      console.warn('No features available in the geojson.');
       return { centroid: null, maxDistance: 0, circle: null };
     }
 
@@ -308,13 +310,17 @@ const LayerisMapLibre = ({
     const centroidCoords = centroid.geometry.coordinates;
 
     // Verificar que el centroide sea un conjunto válido de coordenadas (números)
-    if (!Array.isArray(centroidCoords) || centroidCoords.length !== 2 || isNaN(centroidCoords[0]) || isNaN(centroidCoords[1])) {
-      console.error("Invalid centroid coordinates:", centroidCoords);
+    if (
+      !Array.isArray(centroidCoords) ||
+      centroidCoords.length !== 2 ||
+      isNaN(centroidCoords[0]) ||
+      isNaN(centroidCoords[1])
+    ) {
+      console.error('Invalid centroid coordinates:', centroidCoords);
       return { centroid: null, maxDistance: 0, circle: null };
     }
 
-
-    let adjustedDistance
+    let adjustedDistance;
     let maxDistance = 0;
     let validPoints = 0;
 
@@ -327,17 +333,26 @@ const LayerisMapLibre = ({
           polygon.forEach((ring) => {
             ring.forEach((point) => {
               // Verificar que las coordenadas del punto sean válidas
-              if (Array.isArray(point) && point.length === 2 && !isNaN(point[0]) && !isNaN(point[1])) {
+              if (
+                Array.isArray(point) &&
+                point.length === 2 &&
+                !isNaN(point[0]) &&
+                !isNaN(point[1])
+              ) {
                 validPoints += 1;
                 const pointGeoJson = turf.point(point);
-                const distance = turf.distance(pointGeoJson, turf.point(centroidCoords), { units: 'meters' });
+                const distance = turf.distance(
+                  pointGeoJson,
+                  turf.point(centroidCoords),
+                  { units: 'meters' }
+                );
 
                 // Actualizar maxDistance si la distancia es mayor
                 if (distance > maxDistance) {
                   maxDistance = distance;
                 }
               } else {
-                console.warn("Invalid point detected:", point);
+                console.warn('Invalid point detected:', point);
               }
             });
           });
@@ -347,7 +362,7 @@ const LayerisMapLibre = ({
 
     // Comprobación adicional para asegurarse de que se han procesado puntos válidos
     if (validPoints === 0) {
-      console.warn("No valid points found in the GeoJSON.");
+      console.warn('No valid points found in the GeoJSON.');
       return { centroid: null, maxDistance: 0, circle: null };
     }
 
@@ -364,9 +379,10 @@ const LayerisMapLibre = ({
     }
 
     // Generar el círculo con la distancia ajustada
-    const circle = turf.circle(centroidCoords, adjustedDistance, { steps: 100, units: 'meters' });
-
-
+    const circle = turf.circle(centroidCoords, adjustedDistance, {
+      steps: 100,
+      units: 'meters',
+    });
 
     // Retornar los resultados
     return { centroid: centroidCoords, maxDistance: adjustedDistance, circle };
@@ -375,36 +391,33 @@ const LayerisMapLibre = ({
   const handleDateChange = (timelineDate?: string) => {
     let incidentDate;
 
-    !timelineDate ? (incidentDate = lastDate) : (incidentDate = timelineDate)
+    !timelineDate ? (incidentDate = lastDate) : (incidentDate = timelineDate);
 
-    setSelectedDate(incidentDate)
+    setSelectedDate(incidentDate);
 
     const filteredData = {
       ...geoJson,
       features: geoJson.features.filter(
         (feature) =>
           new Date(feature.properties.date).toISOString().slice(0, 10) ===
-          new Date(incidentDate).toISOString().slice(0, 10) &&
+            new Date(incidentDate).toISOString().slice(0, 10) &&
           (selectedComuna === 'Todo el desastre' ||
-            feature.properties.nom_com === selectedComuna),
+            feature.properties.nom_com === selectedComuna)
       ),
-    }
+    };
 
     updateMapWithGeojson(filteredData);
-  }
+  };
 
- 
-
-  
   const convertCoordsTo3857 = (coords) => {
-    return coords.map(coord => proj4(epsg4326, epsg3857, coord));
+    return coords.map((coord) => proj4(epsg4326, epsg3857, coord));
   };
   const getCqlFilterForWms = (circleCoords) => {
     // Convertir coordenadas de EPSG:4326 a EPSG:3857
     const convertedCoords = convertCoordsTo3857(circleCoords);
 
     // Crear la geometría de POLYGON en EPSG:3857
-    const cqlFilter = `INTERSECTS(geom, POLYGON ((${convertedCoords.map(coord => coord.join(' ')).join(', ')})))`;
+    const cqlFilter = `INTERSECTS(geom, POLYGON ((${convertedCoords.map((coord) => coord.join(' ')).join(', ')})))`;
 
     return cqlFilter;
   };
@@ -486,14 +499,16 @@ const LayerisMapLibre = ({
         zoom: 10,
       });
       mapRef.current.on('load', () => {
-        mapRef.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+        mapRef.current.addControl(
+          new maplibregl.NavigationControl(),
+          'bottom-right'
+        );
 
         handleDateChange(); // Llamar a handleDateChange una vez que el estilo esté cargado
-      },
-    );
-    mapRef.current.on('click', handleMapClick)
+      });
+      // mapRef.current.on('click', handleMapClick)
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -515,10 +530,14 @@ const LayerisMapLibre = ({
     }
   };
 
-  const [infoOpen, setInfoOpen] = useState(false)
-  const [infoExpanded, setInfoExpanded] = useState(false)
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [infoExpanded, setInfoExpanded] = useState(false);
 
-  function removeInactiveLayers(map: maplibregl.Map, availableLayers: Layer[], activeLayers: string[]) {
+  function removeInactiveLayers(
+    map: maplibregl.Map,
+    availableLayers: Layer[],
+    activeLayers: string[]
+  ) {
     availableLayers.forEach((layer) => {
       if (!activeLayers.includes(layer.id)) {
         if (map.getLayer(layer.id)) {
@@ -531,7 +550,12 @@ const LayerisMapLibre = ({
     });
   }
 
-  function addActiveLayers(map: maplibregl.Map, availableLayers: Layer[], activeLayers: string[], circle: CircleType) {
+  function addActiveLayers(
+    map: maplibregl.Map,
+    availableLayers: Layer[],
+    activeLayers: string[],
+    circle: CircleType
+  ) {
     availableLayers
       .filter((layer) => activeLayers.includes(layer.id))
       .forEach((layer) => {
@@ -549,7 +573,6 @@ const LayerisMapLibre = ({
                 `http://192.168.1.116:8080/geoserver/desafio/wms?service=WMS&request=GetMap&layers=${layer.url}&styles=${layer.style}&format=image/png&transparent=true&version=1.1.1&srs=EPSG:3857&bbox={bbox-epsg-3857}&width=256&height=256&CQL_FILTER=${cqlFilter}`,
               ],
               tileSize: 256,
-
             });
 
             map.addLayer({
@@ -564,7 +587,12 @@ const LayerisMapLibre = ({
       });
   }
 
-  function updateActiveLayers(map: maplibregl.Map, availableLayers: Layer[], activeLayers: string[], circle: CircleType) {
+  function updateActiveLayers(
+    map: maplibregl.Map,
+    availableLayers: Layer[],
+    activeLayers: string[],
+    circle: CircleType
+  ) {
     //REMOVE ACTIVE LAYER
     availableLayers.forEach((layer) => {
       if (activeLayers.includes(layer.id)) {
@@ -578,7 +606,6 @@ const LayerisMapLibre = ({
     });
     addActiveLayers(map, availableLayers, activeLayers, circle);
   }
-
 
   return (
     <div className="h-full w-full relative">
@@ -599,10 +626,7 @@ const LayerisMapLibre = ({
           style={{ zIndex: 1000 }}
         >
           <MapPin className="h-5 w-5 text-blue-500" />
-          <Select
-            value={selectedComuna}
-            onValueChange={handleProvinciaChange}
-          >
+          <Select value={selectedComuna} onValueChange={handleProvinciaChange}>
             <SelectTrigger className="sm:w-[170px] w-32 border-none shadow-none focus:ring-0 max-sm:p-0">
               <SelectValue placeholder="Selecciona una provincia" />
             </SelectTrigger>
@@ -628,53 +652,63 @@ const LayerisMapLibre = ({
       {/* BAR MOBILE */}
 
       <div
-        className={`block sm:hidden z-[1000] absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg transition-all duration-300 ease-in-out ${infoExpanded ? 'h-3/4' : 'h-10'
-          }`}
+        className={`block sm:hidden z-[1000] absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg transition-all duration-300 ease-in-out ${
+          infoExpanded ? 'h-3/4' : 'h-10'
+        }`}
       >
         <div
           className="flex justify-center items-center h-10 cursor-pointer"
           onClick={toggleInfo}
-          aria-label={infoExpanded ? "Minimizar panel de información" : "Abrir panel de información"}
+          aria-label={
+            infoExpanded
+              ? 'Minimizar panel de información'
+              : 'Abrir panel de información'
+          }
         >
-          <ChevronUp size={24} className={`transition-transform duration-300 ${infoExpanded ? 'rotate-180' : ''}`} />
+          <ChevronUp
+            size={24}
+            className={`transition-transform duration-300 ${infoExpanded ? 'rotate-180' : ''}`}
+          />
         </div>
-        {
-          infoOpen && (
-
-            <div className="p-4 overflow-y-auto h-[calc(100%-40px)]">
-              <h2 className="text-2xl font-bold mb-6">Información del área</h2>
-              <div className="  p-4 flex space-x-4 ">
-                <div className="flex flex-wrap gap-2">
-                  {InfrastructureData.map(({ color, entity, icon, id, quantity }) => (
+        {infoOpen && (
+          <div className="p-4 overflow-y-auto h-[calc(100%-40px)]">
+            <h2 className="text-2xl font-bold mb-6">Información del área</h2>
+            <div className="  p-4 flex space-x-4 ">
+              <div className="flex flex-wrap gap-2">
+                {InfrastructureData.map(
+                  ({ color, entity, icon, id, quantity }) => (
                     <div
                       key={id}
                       className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm w-full max-w-sm"
                     >
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{entity}</p>
-                        <p className="text-2xl font-bold text-gray-900">{quantity}</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {entity}
+                        </p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {quantity}
+                        </p>
                       </div>
 
                       <div className={`p-2 rounded-full ${color}`}>{icon}</div>
                     </div>
-                  ))}
-                </div>
-              </div>
-              <div className="mt-8 space-y-1">
-                <h3 className="text-xl font-semibold mb-4">Estadísticas demográficas</h3>
-                <BarChartToMap />
-
-                <BarChartToMap />
-
+                  )
+                )}
               </div>
             </div>
-          )
+            <div className="mt-8 space-y-1">
+              <h3 className="text-xl font-semibold mb-4">
+                Estadísticas demográficas
+              </h3>
+              <BarChartToMap />
 
-        }
+              <BarChartToMap />
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className='hidden sm:block'>
-
+      <div className="hidden sm:block">
         {activeSection.infrastructure && (
           <InfraestructureCard infraestructureData={InfrastructureData} />
         )}
@@ -723,9 +757,7 @@ const LayerisMapLibre = ({
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default LayerisMapLibre
-
-
+export default LayerisMapLibre;

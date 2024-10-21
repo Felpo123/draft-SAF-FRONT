@@ -1,32 +1,53 @@
 // src/app/login/page.tsx
-'use client'
-import React, { useState } from 'react'
-import { useRouter } from 'next/navigation' // Asegúrate de importar desde 'next/navigation'
-import { geoserverApi } from '@/lib/api/geoserver/geoserverApi'
+'use client';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation'; // Asegúrate de importar desde 'next/navigation'
+import { geoserverApi } from '@/lib/api/geoserver/geoserverApi';
+import { signIn } from 'next-auth/react';
+import { set } from 'zod';
 
 const LoginPage = () => {
   // Estado para el nombre de usuario, contraseña y posibles errores
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const router = useRouter()
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const router = useRouter();
 
   const handleLogin = async (e) => {
-    e.preventDefault() // Evitar el comportamiento por defecto del formulario
+    console.log(e);
+    e.preventDefault(); // Evitar el comportamiento por defecto del formulario
 
-    // Realizar la autenticación contra GeoServer
-    const isAuthenticated = await authenticateUser(username, password)
+    // // Realizar la autenticación contra GeoServer
+    // const isAuthenticated = await authenticateUser(username, password)
 
-    if (isAuthenticated) {
-      // Almacenar las credenciales en localStorage
-      localStorage.setItem('geoServerUser', username)
-      localStorage.setItem('geoServerPass', password)
-      // Redirigir a la página /home
-      router.push('/home') // Cambia esto a la página que desees
-    } else {
-      setError('Credenciales incorrectas. Intenta de nuevo.')
+    // if (isAuthenticated) {
+    //   // Almacenar las credenciales en localStorage
+    //   localStorage.setItem('geoServerUser', username)
+    //   localStorage.setItem('geoServerPass', password)
+    //   // Redirigir a la página /home
+    //   router.push('/home') // Cambia esto a la página que desees
+    // } else {
+    //   setError('Credenciales incorrectas. Intenta de nuevo.')
+    // }
+    try {
+      setError('cargando...');
+      const res = await signIn('credentials', {
+        username,
+        password,
+        redirect: false,
+        redirectTo: '/home',
+      });
+
+      if (!res?.error) {
+        setError('redirigiendo...');
+        router.push('/home');
+      } else {
+        setError('Credenciales incorrectas. Intenta de nuevo.');
+      }
+    } catch (error) {
+      setError('Credenciales incorrectas. Intenta de nuevo.');
     }
-  }
+  };
 
   // Función para autenticar al usuario con GeoServer
   const authenticateUser = async (username, password) => {
@@ -34,7 +55,7 @@ const LoginPage = () => {
     if (auth) {
       return true;
     }
-  }
+  };
 
   return (
     <main className="md:flex h-screen">
@@ -118,7 +139,7 @@ const LoginPage = () => {
         </p>
       </div>
     </main>
-  )
-}
+  );
+};
 
-export default LoginPage
+export default LoginPage;
