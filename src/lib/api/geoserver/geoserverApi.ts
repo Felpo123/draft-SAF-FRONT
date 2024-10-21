@@ -19,6 +19,7 @@ class GeoserverApi {
 
     async authenticate(username: string, password: string) {
         return this.client.get('/geoserver/rest/workspaces', {
+            
             headers: {
                 'Authorization': 'Basic ' + btoa(`${username}:${password}`),
                 'Accept': 'application/json'

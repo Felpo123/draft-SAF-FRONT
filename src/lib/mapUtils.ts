@@ -80,7 +80,7 @@ export const extractDatesAndIds = (geojsonData: Geojson) => {
 export const fetchIncidentGEOJSON = async (idEvent: string) => {
   const filter = `<Filter><PropertyIsEqualTo><PropertyName>id_evento</PropertyName><Literal>${idEvent}</Literal></PropertyIsEqualTo></Filter>`
   const encodedFilter = encodeURIComponent(filter)
-  const wfsUrl = `http://192.168.1.116:8080/geoserver/desafio/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=desafio:incidentes&outputFormat=application/json&filter=${encodedFilter}`
+  const wfsUrl = `http://192.168.1.116:8080/geoserver/desafio/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=desafio:incidentes&outputFormat=application/json&filter=${encodedFilter}`
   try {
     const response = await fetch(wfsUrl)
     if (!response.ok) {
