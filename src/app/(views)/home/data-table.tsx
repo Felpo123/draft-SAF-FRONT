@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import {
   ColumnDef,
@@ -8,7 +8,7 @@ import {
   getPaginationRowModel,
   ColumnFiltersState,
   getFilteredRowModel,
-} from '@tanstack/react-table'
+} from '@tanstack/react-table';
 
 import {
   Table,
@@ -17,54 +17,68 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { ClipboardList, Edit3, FileText, LayoutDashboardIcon } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { Incident } from '@/lib/data'
-import jsPDF from 'jspdf'
-import UploadButton from '@/components/UploadButton'
-import React from 'react'
-import { Input } from '@/components/ui/input'
-import { Feature } from '@/lib/mapUtils'
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import {
+  ClipboardList,
+  Edit3,
+  FileText,
+  LayoutDashboardIcon,
+  X,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Incident } from '@/lib/data';
+import jsPDF from 'jspdf';
+import UploadButton from '@/components/UploadButton';
+import React from 'react';
+import { Input } from '@/components/ui/input';
+import { Feature } from '@/lib/mapUtils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  const router = useRouter()
+  const router = useRouter();
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  )
+    []
+  );
+  const [stateFilter, setStateFilter] = React.useState<string | null>(null);
 
   //add action column
 
   const generatePDF = async (incident: Incident) => {
-    const doc = new jsPDF()
-    doc.text('Este es un PDF generado en el frontend', 10, 10)
-    doc.text(`Nombre: ${incident.nombre}`, 10, 20)
-    doc.text(`Estado: ${incident.estado}`, 10, 30)
-    doc.text(`Origen: ${incident.origen}`, 10, 40)
-    doc.text(`Región: ${incident.region}`, 10, 50)
-    doc.text(`Provincia: ${incident.provincia}`, 10, 60)
-    doc.text(`Comuna: ${incident.comuna}`, 10, 70)
-    doc.text(`Ciudad: ${incident.ciudad}`, 10, 80)
-    doc.text(`Última Actualización: ${incident.ultima_actualizacion}`, 10, 90)
+    const doc = new jsPDF();
+    doc.text('Este es un PDF generado en el frontend', 10, 10);
+    doc.text(`Nombre: ${incident.nombre}`, 10, 20);
+    doc.text(`Estado: ${incident.estado}`, 10, 30);
+    doc.text(`Origen: ${incident.origen}`, 10, 40);
+    doc.text(`Región: ${incident.region}`, 10, 50);
+    doc.text(`Provincia: ${incident.provincia}`, 10, 60);
+    doc.text(`Comuna: ${incident.comuna}`, 10, 70);
+    doc.text(`Ciudad: ${incident.ciudad}`, 10, 80);
+    doc.text(`Última Actualización: ${incident.ultima_actualizacion}`, 10, 90);
 
-    doc.save(`${incident.nombre}.pdf`)
-  }
+    doc.save(`${incident.nombre}.pdf`);
+  };
 
   if (!columns.find((column) => column.id === 'actions')) {
     columns.push({
       id: 'actions',
       header: () => <div className="text-center">Acciones</div>,
       cell: ({ row }) => {
-        const incident = row.original as Feature
+        const incident = row.original as Feature;
         const state = incident.properties.estado === 'Activo';
 
         return (
@@ -76,25 +90,29 @@ export function DataTable<TData, TValue>({
               variant="outline"
               onClick={() => {
                 router.push(
-                  `/incidente?action=edit&incident=${incident.properties.id}`,
-                )
+                  `/incidente?action=edit&incident=${incident.properties.id}`
+                );
               }}
             >
               <Edit3 size={20} />
             </Button>
             {/* Icono para Ver Dashboard */}
             <Button
-              aria-label={state ? "View Dashboard" : "View Report"}
+              aria-label={state ? 'View Dashboard' : 'View Report'}
               className="p-2 hover:bg-gray-200 rounded"
               variant="outline"
               onClick={() => {
-                const page = state ? '/maplibre' : '/reporte'
+                const page = state ? '/maplibre' : '/reporte';
                 router.push(
-                  `${page}?idEvent=${incident.properties.id_evento}&name=${incident.properties.nom_event}`,
-                )
+                  `${page}?idEvent=${incident.properties.id_evento}&name=${incident.properties.nom_event}`
+                );
               }}
             >
-              {state ? <LayoutDashboardIcon size={20} /> : <ClipboardList size={20} />}
+              {state ? (
+                <LayoutDashboardIcon size={20} />
+              ) : (
+                <ClipboardList size={20} />
+              )}
             </Button>
             {/* Icono para Cargar */}
             <UploadButton />
@@ -108,9 +126,9 @@ export function DataTable<TData, TValue>({
               <FileText size={20} />
             </Button>
           </div>
-        )
+        );
       },
-    })
+    });
   }
 
   const table = useReactTable({
@@ -128,26 +146,61 @@ export function DataTable<TData, TValue>({
     state: {
       columnFilters,
     },
-  })
+  });
+
+  const handleStateFilterChange = (value: string) => {
+    if (value === '') {
+      setStateFilter(null);
+      table.getColumn('properties_estado')?.setFilterValue(undefined);
+    } else {
+      setStateFilter(value);
+      table.getColumn('properties_estado')?.setFilterValue(value);
+    }
+  };
 
   return (
     <div>
       <div className="flex items-center justify-between py-4 gap-4">
-        <Input
-          placeholder="Filter names..."
-          value={
-            (table
-              .getColumn('properties_nom_event')
-              ?.getFilterValue() as string) ?? ''
-          }
-          onChange={(event) =>
-            table
-              .getColumn('properties_nom_event')
-              ?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-
+        <div className="flex gap-2">
+          <Input
+            placeholder="Filtrar por nombre..."
+            value={
+              (table
+                .getColumn('properties_nom_event')
+                ?.getFilterValue() as string) ?? ''
+            }
+            onChange={(event) =>
+              table
+                .getColumn('properties_nom_event')
+                ?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+          <div className="relative">
+            <Select
+              onValueChange={handleStateFilterChange}
+              value={stateFilter || ''}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Activo">Activo</SelectItem>
+                <SelectItem value="Apagado">Apagado</SelectItem>
+              </SelectContent>
+            </Select>
+            {stateFilter && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute right-0 top-0 h-full "
+                onClick={() => handleStateFilterChange('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
         <Button
           className="rounded-sm bg-blue-500 text-white hover:bg-blue-600 w-40 flex-initial"
           onClick={() => router.push('/incidente?action=create')}
@@ -169,11 +222,11 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -184,8 +237,9 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className={`${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                    } hover:bg-gray-100 transition-colors`}
+                  className={`${
+                    rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                  } hover:bg-gray-100 transition-colors`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
@@ -194,7 +248,7 @@ export function DataTable<TData, TValue>({
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext(),
+                        cell.getContext()
                       )}
                     </TableCell>
                   ))}
@@ -232,5 +286,5 @@ export function DataTable<TData, TValue>({
         </Button>
       </div>
     </div>
-  )
+  );
 }
