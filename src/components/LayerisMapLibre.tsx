@@ -40,6 +40,7 @@ import BarChartToMap from './BarChartToMap'
 
 import '@mapbox-controls/tooltip/src/index.css'
 import proj4 from 'proj4';
+import { popup } from 'leaflet'
 
 
 const epsg4326 = 'EPSG:4326'; // Sistema geográfico (lon, lat)
@@ -82,7 +83,8 @@ const LayerisMapLibre = ({
   const [superficieTotal, setSuperficieTotal] = useState(0) // Nueva variable para la suma de superf
   const [layersOpen, setLayersOpen] = useState(false)
   const [activeLayers, setActiveLayers] = useState<string[]>([])
-  let currentPopup: maplibregl.Popup | null = null;
+  const activeLayersRef = useRef<string[]>([]);
+  const currentPopupRef = useRef<maplibregl.Popup | null>(null);
 
 
 
@@ -235,8 +237,7 @@ const LayerisMapLibre = ({
         ? current.filter((id) => id !== layerId)
         : [...current, layerId]
     );
-  };
-
+  }
   const updateMapWithGeojson = (geojsonData: Geojson) => {
     if (mapRef.current) {
       const map = mapRef.current;
@@ -509,140 +510,135 @@ const LayerisMapLibre = ({
   }, []);
 
   useEffect(() => {
+    activeLayersRef.current = activeLayers; // Actualiza la referencia
+  }, [activeLayers]);
+
+  useEffect(() => {
     const map = mapRef.current;
     if (map) {
+      console.log(activeLayersRef.current); // Verifica el valor actual de activeLayersRef
+      PopupLogica(map, availableLayers, currentPopupRef);
       // Obtener todas las capas que ya no están activas y eliminarlas del mapa
-      removeInactiveLayers(map, availableLayers, activeLayers);
+      removeInactiveLayers(map, availableLayers, activeLayersRef.current);
       // Agregar todas las capas activas al mapa
-      addActiveLayers(map, availableLayers, activeLayers, circle);
-      //PopupLogica(map,availableLayers, activeLayers)  
+      addActiveLayers(map, availableLayers, activeLayersRef.current, circle);
     }
-}),[activeLayers, availableLayers];
-useEffect(() => {
-  const map = mapRef.current;
-  console.log(map?.off);
-    PopupLogica(map,availableLayers, activeLayers)  
-}),[activeLayers, availableLayers];
+  }, [activeLayers, availableLayers]);
 
-function PopupLogica(map: maplibregl.Map, availableLayers: Layer[], activeLayers: string[]) {
-  let currentPopup = null;  // Almacena el popup actual
-  let clickListener = null; // Referencia al evento de clic actual
-  let queryInProgress = false;  // Controla si hay una consulta en progreso
-
-  // Función para cerrar y eliminar cualquier popup anterior
-  const closePreviousPopup = () => {
-    if (currentPopup) {
-        console.log("xD",currentPopup);
-        console.log("HLOOAJDLSJHF")
-          currentPopup.remove();
-          currentPopup = null;
+  function PopupLogica(map, availableLayers, activeLayers, currentPopupRef) {
+    let queryInProgress = false;
+  
+    const closePreviousPopup = () => {
+      if (currentPopupRef.current) {
+        currentPopupRef.current.remove();
+        currentPopupRef.current = null;
       }
-  };
-
-  // Función para eliminar el evento de clic anterior
-  const removePreviousClickListener = () => {
-      if (clickListener) {
-          map.off('click', clickListener);  // Eliminar el evento de clic anterior
-          clickListener = null;             // Restablecer la referencia
-      }
-  };
-
-  // Función principal que maneja la lógica del clic
-  const handleMapClick = async (e) => {
+    };
+  
+    const handleMapClick = async (e) => {
       if (queryInProgress) {
-          console.log("Una consulta ya está en progreso. Cancelando la consulta actual.");
-          return;  // Si ya hay una consulta en progreso, salir
+          console.log("Consulta en progreso. Ignorando clic.");
+          return;
       }
-
+  
       if (activeLayers.length === 0) {
-          console.log("No hay capas activas para consultar. Ignorando clic.");
-          return;  // Si no hay capas activas, ignorar el clic
-      }
-
-      queryInProgress = true;  // Marcar que una consulta está en progreso
-      closePreviousPopup();  // Cerrar popup anterior
-      console.log("somos la activelayers",activeLayers)
-
-      const coordinates = e.lngLat;
-
-      // Transformar coordenadas
-      const transformedCoordinates = convertCoordsTo3857([[e.lngLat.lng, e.lngLat.lat]]);
-
-      // Filtrar capas activasif
-      const activeLayerObjects = availableLayers.filter((layer) => activeLayers.includes(layer.id));
-      console.log(availableLayers.filter((layer) => activeLayers.includes(layer.id)))
-      if (activeLayerObjects.length === 0) {
           console.log("No hay capas activas para consultar.");
-          queryInProgress = false;  // Reiniciar el estado de la consulta
-          return;  // Si no hay capas activas, no hacer ninguna consulta
+          return;
       }
-
-      let foundProperties = false; // Marcar si se encontraron propiedades
-
-      // Iterar sobre capas activas y hacer la consulta solo una vez
+  
+      queryInProgress = true;
+      closePreviousPopup();
+  
+      const coordinates = e.lngLat;
+      const transformedCoordinates = convertCoordsTo3857([[e.lngLat.lng, e.lngLat.lat]]);
+      console.log("Dentro de logica de capas", activeLayers);
+  
+      const activeLayerObjects = availableLayers.filter(layer => activeLayers.includes(layer.id));
+      let layersData = []; // Almacena la información de las capas
+  
       for (const layer of activeLayerObjects) {
           console.log(`Consultando datos para la capa: ${layer.id} con URL: ${layer.url}`);
-
-          // Verificar que la capa siga activa antes de hacer la consulta
-          if (!activeLayers.includes(layer.id)) {
-              console.log(`La capa ${layer.id} ya no está activa, saltando consulta.`);
-              continue;  // Si la capa ya no está activa, saltar esta iteración
-          }
-
+  
           const propertiesArray = await fetchWFSData(transformedCoordinates[0], layer.url);
-          console.log("Propiedades obtenidas:", propertiesArray);
-
-          if (propertiesArray && Object.keys(propertiesArray).length > 0) {
-              currentPopup = showPopupWithAllProperties(map, coordinates, propertiesArray);
-              foundProperties = true;  // Marcamos que se encontraron propiedades// Salimos después de mostrar el popup de la primera capa con propiedades
-          } else {
-              console.log("No se encontraron propiedades para mostrar.");
+          if (propertiesArray && propertiesArray.length > 0) {
+              layersData.push({
+                  layerName: layer.id, // O el nombre que prefieras mostrar
+                  properties: propertiesArray[0] // Solo tomamos la primera propiedad por simplicidad
+              });
           }
       }
-
-      if (!foundProperties) {
+  
+      if (layersData.length > 0) {
+          // Mostrar todas las propiedades en pestañas
+          const newPopup = showPopupWithLayerTabs(map, coordinates, layersData);
+          currentPopupRef.current = newPopup;
+      } else {
           console.log("No se encontraron propiedades en ninguna capa.");
       }
-
-      queryInProgress = false;  // Reiniciar el estado de la consulta
+  
+      queryInProgress = false; // Reiniciar el estado de la consulta
   };
-
-  // Antes de añadir un nuevo evento de clic, eliminar cualquier evento anterior
-  removePreviousClickListener();  // Asegurarse de que no haya múltiples listeners activos
-
-  // Añadir un nuevo evento de clic si hay capas activas
-  if (activeLayers.length > 0) {
-      clickListener = handleMapClick;
-      map.on('click', clickListener);
-  } else {
-      console.log("No hay capas activas, eliminando listener de clic.");
-      removePreviousClickListener();  // Eliminar el listener si no hay capas activas
-  }
 }
-
-
-
   
   
-  function showPopupWithAllProperties(map, coordinates, properties) {
+  function showPopupWithLayerTabs(map, coordinates, layersData) {
     const popupContent = document.createElement('div');
-    popupContent.innerHTML = `
-        <h5>Propiedades</h5>
+  
+    // Crear las pestañas
+    const tabsContainer = document.createElement('div');
+    tabsContainer.classList.add('tabs');
+  
+    const contentContainer = document.createElement('div');
+    contentContainer.classList.add('tab-content');
+  
+    // Crear pestañas y contenido
+    layersData.forEach((layer, index) => {
+      const tab = document.createElement('button');
+      tab.classList.add('tab');
+      tab.innerText = layer.layerName; // Nombre de la capa
+      tab.onclick = () => {
+        // Mostrar solo el contenido de la pestaña activa
+        const activeTab = contentContainer.querySelector('.active');
+        if (activeTab) activeTab.classList.remove('active');
+        const newActiveTab = contentContainer.children[index];
+        if (newActiveTab) newActiveTab.classList.add('active');
+      };
+  
+      tabsContainer.appendChild(tab);
+  
+      const tabContent = document.createElement('div');
+      tabContent.classList.add('tab-content-item');
+      tabContent.innerHTML = `
+        <h5>${layer.layerName} Propiedades</h5>
         <ul>
-            ${Object.entries(properties).map(([key, value]) => `<li><strong>${key}:</strong> ${value}</li>`).join('')}
+            ${Object.entries(layer.properties).map(([key, value]) => `
+              <li><strong>${key}:</strong> ${value}</li>
+            `).join('')}
         </ul>
-    `;
-
+      `;
+      
+      // Ocultar el contenido de la pestaña excepto la primera
+      if (index !== 0) {
+        tabContent.classList.remove('active');
+      } else {
+        tabContent.classList.add('active');
+      }
+  
+      contentContainer.appendChild(tabContent);
+    });
+  
+    popupContent.appendChild(tabsContainer);
+    popupContent.appendChild(contentContainer);
+  
     // Crear el popup y añadirlo al mapa
     const popup = new maplibregl.Popup({ offset: 37, anchor: 'bottom' })
       .setDOMContent(popupContent)
       .setLngLat(coordinates)
       .addTo(map);
-
+  
     return popup;
-}
-
-
+  }
+  
 
   
 
@@ -665,11 +661,18 @@ function PopupLogica(map: maplibregl.Map, availableLayers: Layer[], activeLayers
     map: maplibregl.Map,
     availableLayers: Layer[],
     activeLayers: string[]
-  ) {
+  ) 
+  {
+
     availableLayers.forEach((layer) => {
       if (!activeLayers.includes(layer.id)) {
         if (map.getLayer(layer.id)) {
           map.removeLayer(layer.id);
+          if (currentPopupRef.current) {
+            currentPopupRef.current.remove();  // Cierra el popup si existe
+            currentPopupRef.current = null;    // Reiniciar la referencia
+          }
+          
         }
         if (map.getSource(layer.id)) {
           map.removeSource(layer.id);

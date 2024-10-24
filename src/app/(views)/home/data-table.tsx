@@ -58,7 +58,7 @@ export function DataTable<TData, TValue>({
 
   //add action column
 
-  const generatePDF = async (incident: Incident) => {
+  const generatePDF = async (incident: IncidentProperties ) => {
     const doc = new jsPDF();
     doc.text('Este es un PDF generado en el frontend', 10, 10);
     doc.text(`Nombre: ${incident.nombre}`, 10, 20);
@@ -69,6 +69,10 @@ export function DataTable<TData, TValue>({
     doc.text(`Comuna: ${incident.comuna}`, 10, 70);
     doc.text(`Ciudad: ${incident.ciudad}`, 10, 80);
     doc.text(`Última Actualización: ${incident.ultima_actualizacion}`, 10, 90);
+
+    const url = "/imgs/logo.png"
+    doc.addImage(url,"PNG",100,80,100,10)
+
 
     doc.save(`${incident.nombre}.pdf`);
   };
@@ -121,7 +125,7 @@ export function DataTable<TData, TValue>({
               aria-label="Download Report"
               className="p-2 hover:bg-gray-200 rounded"
               variant="outline"
-              onClick={() => console.log('Download Report')}
+              onClick={() => generatePDF(incident.properties)}
             >
               <FileText size={20} />
             </Button>
