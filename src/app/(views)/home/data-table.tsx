@@ -58,20 +58,18 @@ export function DataTable<TData, TValue>({
 
   //add action column
 
-<<<<<<< HEAD
-  const generatePDF = async (incident: IncidentProperties ) => {
-=======
+
+
   const generatePDF = async (incident: IncidentProperties) => {
->>>>>>> 0f6c07d481e49cac6f47245e2342a7d1fc50fc20
+
     const doc = new jsPDF();
 
-<<<<<<< HEAD
+
     const url = "/imgs/logo.png"
     doc.addImage(url,"PNG",100,80,100,10)
 
 
     doc.save(`${incident.nombre}.pdf`);
-=======
     // Añade texto
     doc.text('Este es un PDF generado en el frontend', 10, 10);
     doc.text(`Nombre: ${incident.nom_com}`, 10, 20);
@@ -84,7 +82,6 @@ export function DataTable<TData, TValue>({
 
     // Descarga el PDF
     doc.save(`${incident.nom_com}.pdf`);
->>>>>>> 0f6c07d481e49cac6f47245e2342a7d1fc50fc20
   };
 
   if (!columns.find((column) => column.id === 'actions')) {
@@ -301,4 +298,4 @@ export function DataTable<TData, TValue>({
       </div>
     </div>
   );
-}
+
