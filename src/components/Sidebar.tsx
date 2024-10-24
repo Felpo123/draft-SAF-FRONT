@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import {
   ChevronLeft,
   ChevronRight,
@@ -6,18 +6,64 @@ import {
   Home,
   LayoutDashboard,
   MapPinPlus,
+  Notebook,
   Settings,
   Users,
-} from 'lucide-react'
-import Link from 'next/link'
-import React, { useState } from 'react'
-import { Button } from './ui/button'
-import Image from 'next/image'
+} from 'lucide-react';
+import Link from 'next/link';
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import Image from 'next/image';
 
-function Sidebar() {
-  const [sidebarExpanded, setSidebarExpanded] = useState(false)
+const ADMIN_ROUTES = [
+  {
+    name: 'Home',
+    icon: Home,
+    href: '/home',
+  },
+  {
+    name: 'Registrar Incidente',
+    icon: MapPinPlus,
+    href: '/incidente',
+  },
+  {
+    name: 'Reporte',
+    icon: Notebook,
+    href: '/reporte',
+  },
+  {
+    name: 'Configuración',
+    icon: Settings,
+    href: '/settings',
+  },
+];
 
-  const toggleSidebar = () => setSidebarExpanded(!sidebarExpanded)
+const USER_ROUTES = [
+  {
+    name: 'Home',
+    icon: Home,
+    href: '/home',
+  },
+  {
+    name: 'Registrar Incidente',
+    icon: MapPinPlus,
+    href: '/incidente',
+  },
+  {
+    name: 'Reporte',
+    icon: Notebook,
+    href: '/reporte',
+  },
+];
+
+interface SidebarProps {
+  isAdmin: boolean;
+}
+
+function Sidebar({ isAdmin }: SidebarProps) {
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+
+  const toggleSidebar = () => setSidebarExpanded(!sidebarExpanded);
   return (
     <aside
       className={`${
@@ -37,7 +83,7 @@ function Sidebar() {
           <span className="text-xl font-bold">DESAFIO SAF</span>
         )}
       </div>
-      <nav className="flex-1 space-y-2 pl-2">
+      {/* <nav className="flex-1 space-y-3 pl-2">
         <Link href="/home">
           <Button variant="ghost" className="w-full justify-start mb-2">
             <Home className="mr-2" size={24} />
@@ -52,10 +98,35 @@ function Sidebar() {
         </Link>
         <Link href="/reporte">
           <Button variant="ghost" className="w-full justify-start">
-            <Settings className="mr-2" size={24} />
+            <Notebook className="mr-2" size={24} />
             {sidebarExpanded && <span>Reporte</span>}
           </Button>
         </Link>
+        <Link href="/settings">
+          <Button variant="ghost" className="w-full justify-start">
+            <Settings className="mr-2" size={24} />
+            {sidebarExpanded && <span>Configuración</span>}
+          </Button>
+        </Link>
+      </nav> */}
+      <nav className="flex-1 space-y-3 pl-2">
+        {isAdmin
+          ? ADMIN_ROUTES.map((route) => (
+              <Link href={route.href} key={route.name}>
+                <Button variant="ghost" className="w-full justify-start mb-2">
+                  <route.icon className="mr-2" size={24} />
+                  {sidebarExpanded && <span>{route.name}</span>}
+                </Button>
+              </Link>
+            ))
+          : USER_ROUTES.map((route) => (
+              <Link href={route.href} key={route.name}>
+                <Button variant="ghost" className="w-full justify-start mb-2">
+                  <route.icon className="mr-2" size={24} />
+                  {sidebarExpanded && <span>{route.name}</span>}
+                </Button>
+              </Link>
+            ))}
       </nav>
       <div className="p-4 ">
         <div className="flex justify-center">
@@ -74,7 +145,7 @@ function Sidebar() {
         </div>
       </div>
     </aside>
-  )
+  );
 }
 
-export default Sidebar
+export default Sidebar;

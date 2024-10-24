@@ -1,12 +1,12 @@
-'use client'
-import 'maplibre-gl/dist/maplibre-gl.css'
-import maplibregl, { GeoJSONSource, Map , Popup} from 'maplibre-gl'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import InfraestructureCard from './InfraestructureCard'
-import GraphsCard from './GraphsCard'
-import MapBar from './MapBar'
-import WeatherCard from './WeatherCard'
-import Timeline from './TimelineMapBar'
+'use client';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import maplibregl, { GeoJSONSource, Map, Popup } from 'maplibre-gl';
+import React, { use, useCallback, useEffect, useRef, useState } from 'react';
+import InfraestructureCard from './InfraestructureCard';
+import GraphsCard from './GraphsCard';
+import MapBar from './MapBar';
+import WeatherCard from './WeatherCard';
+import Timeline from './TimelineMapBar';
 import {
   extractDatesAndComunas,
   extractDatesAndIds,
@@ -32,15 +32,14 @@ import {
   SelectValue,
 } from './ui/select';
 import { Feature, Polygon, GeoJsonProperties } from 'geojson';
-import RulerControl from '@mapbox-controls/ruler'
-import '@mapbox-controls/ruler/src/index.css'
-import '@mapbox-controls/compass/src/index.css'
-import * as turf from '@turf/turf'
-import BarChartToMap from './BarChartToMap'
+import RulerControl from '@mapbox-controls/ruler';
+import '@mapbox-controls/ruler/src/index.css';
+import '@mapbox-controls/compass/src/index.css';
+import * as turf from '@turf/turf';
+import BarChartToMap from './BarChartToMap';
 
-import '@mapbox-controls/tooltip/src/index.css'
+import '@mapbox-controls/tooltip/src/index.css';
 import proj4 from 'proj4';
-
 
 const epsg4326 = 'EPSG:4326'; // Sistema geográfico (lon, lat)
 const epsg3857 = 'EPSG:3857'; // Web Mercator
@@ -68,23 +67,26 @@ const LayerisMapLibre = ({
   geoJson,
 }: LayerisMapLibreProps) => {
   type CircleType = Feature<Polygon, GeoJsonProperties> | null;
-  const setPopupInfo = useRef<Map | null>(null)
-  const popupInfo  = useRef<Map | null>(null)
+  const setPopupInfo = useRef<Map | null>(null);
+  const popupInfo = useRef<Map | null>(null);
   const [circle, setCircle] = useState<CircleType>(null);
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const dates = extractDatesAndIds(geoJson).fechasUnicas;
   const [incidentDates, setIncidentDates] = useState<string[]>(dates);
   const lastDate = dates[dates.length - 1];
-  const [selectedDate, setSelectedDate] = useState(lastDate)
-  const comunas = ['Todo el desastre', ...extractDatesAndComunas(geoJson).provinciasUnicas]
-  const [selectedComuna, setSelectedComuna] = useState('Todo el desastre') // Provincia seleccionada
-  const [superficieTotal, setSuperficieTotal] = useState(0) // Nueva variable para la suma de superf
-  const [layersOpen, setLayersOpen] = useState(false)
-  const [activeLayers, setActiveLayers] = useState<string[]>([])
-  let currentPopup: maplibregl.Popup | null = null;
-
-
+  const [selectedDate, setSelectedDate] = useState(lastDate);
+  const comunas = [
+    'Todo el desastre',
+    ...extractDatesAndComunas(geoJson).provinciasUnicas,
+  ];
+  const [selectedComuna, setSelectedComuna] = useState('Todo el desastre'); // Provincia seleccionada
+  const [superficieTotal, setSuperficieTotal] = useState(0); // Nueva variable para la suma de superf
+  const [layersOpen, setLayersOpen] = useState(false);
+  const [activeLayers, setActiveLayers] = useState<string[]>([]);
+  const [currentPopup, setCurrentPopup] = useState<maplibregl.Popup | null>(
+    null
+  );
 
   const handleProvinciaChange = (selectedComuna: string) => {
     setSelectedComuna(selectedComuna);
@@ -391,8 +393,6 @@ const LayerisMapLibre = ({
     return { centroid: centroidCoords, maxDistance: adjustedDistance, circle };
   };
 
-
-
   const handleDateChange = (timelineDate?: string) => {
     let incidentDate;
 
@@ -437,28 +437,28 @@ const LayerisMapLibre = ({
     </Filter>`;
 
     const encodedBboxFilter = encodeURIComponent(bboxFilter);
-    
+
     // Construir la URL para la solicitud WFS
     const wfsUrl = `http://192.168.1.116:8080/geoserver/desafio/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=${layerURL}&outputFormat=application/json&filter=${encodedBboxFilter}`;
-    
+
     try {
-        const response = await fetch(wfsUrl);
-        if (!response.ok) {
-            throw new Error(`Error en la solicitud: ${response.status}`);
-        }
+      const response = await fetch(wfsUrl);
+      if (!response.ok) {
+        throw new Error(`Error en la solicitud: ${response.status}`);
+      }
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (data.features && data.features.length > 0) {
-          return data.features.map(feature => feature.properties); // Retornar propiedades de la primera característica
-        } else {
-            return null; // Retornar null si no hay características
-        }
+      if (data.features && data.features.length > 0) {
+        return data.features.map((feature) => feature.properties); // Retornar propiedades de la primera característica
+      } else {
+        return null; // Retornar null si no hay características
+      }
     } catch (error) {
-        console.error("Error al obtener los datos WFS:", error);
-        return null; // Retornar null en caso de error
+      console.error('Error al obtener los datos WFS:', error);
+      return null; // Retornar null en caso de error
     }
-};
+  };
 
   const getCqlFilterForWms = (circleCoords) => {
     // Convertir coordenadas de EPSG:4326 a EPSG:3857
@@ -497,14 +497,15 @@ const LayerisMapLibre = ({
       });
 
       mapRef.current.on('load', () => {
-        mapRef.current.addControl(
+        mapRef.current?.addControl(
           new maplibregl.NavigationControl(),
           'bottom-right'
         );
 
+        mapRef.current?.on('click', handleMapClick);
+
         handleDateChange(); // Llamar a handleDateChange una vez que el estilo esté cargado
       });
-      // mapRef.current.on('click', handleMapClick)
     }
   }, []);
 
@@ -515,138 +516,72 @@ const LayerisMapLibre = ({
       removeInactiveLayers(map, availableLayers, activeLayers);
       // Agregar todas las capas activas al mapa
       addActiveLayers(map, availableLayers, activeLayers, circle);
-      //PopupLogica(map,availableLayers, activeLayers)  
+      //PopupLogica(map,availableLayers, activeLayers)
     }
-}),[activeLayers, availableLayers];
-useEffect(() => {
-  const map = mapRef.current;
-  console.log(map?.off);
-    PopupLogica(map,availableLayers, activeLayers)  
-}),[activeLayers, availableLayers];
+  }),
+    [activeLayers, availableLayers];
 
-function PopupLogica(map: maplibregl.Map, availableLayers: Layer[], activeLayers: string[]) {
-  let currentPopup = null;  // Almacena el popup actual
-  let clickListener = null; // Referencia al evento de clic actual
-  let queryInProgress = false;  // Controla si hay una consulta en progreso
+  const handleMapClick = async (e: maplibregl.MapMouseEvent) => {
+    const coordinates = e.lngLat;
+    console.log(activeLayers);
+    // Transformar coordenadas
+    const transformedCoordinates = convertCoordsTo3857([
+      [e.lngLat.lng, e.lngLat.lat],
+    ]);
+    // Filtrar capas activasif
+    const activeLayerObjects = availableLayers.filter((layer) =>
+      activeLayers.includes(layer.id)
+    );
 
-  // Función para cerrar y eliminar cualquier popup anterior
-  const closePreviousPopup = () => {
     if (currentPopup) {
-        console.log("xD",currentPopup);
-        console.log("HLOOAJDLSJHF")
-          currentPopup.remove();
-          currentPopup = null;
+      currentPopup.remove();
+    }
+
+    for (const layer of activeLayerObjects) {
+      const propertiesArray = await fetchWFSData(
+        transformedCoordinates[0],
+        layer.url
+      );
+
+      if (propertiesArray && Object.keys(propertiesArray).length > 0) {
+        setCurrentPopup(
+          showPopupWithAllProperties(
+            mapRef.current,
+            coordinates,
+            propertiesArray
+          )
+        );
       }
+    }
   };
 
-  // Función para eliminar el evento de clic anterior
-  const removePreviousClickListener = () => {
-      if (clickListener) {
-          map.off('click', clickListener);  // Eliminar el evento de clic anterior
-          clickListener = null;             // Restablecer la referencia
-      }
-  };
-
-  // Función principal que maneja la lógica del clic
-  const handleMapClick = async (e) => {
-      if (queryInProgress) {
-          console.log("Una consulta ya está en progreso. Cancelando la consulta actual.");
-          return;  // Si ya hay una consulta en progreso, salir
-      }
-
-      if (activeLayers.length === 0) {
-          console.log("No hay capas activas para consultar. Ignorando clic.");
-          return;  // Si no hay capas activas, ignorar el clic
-      }
-
-      queryInProgress = true;  // Marcar que una consulta está en progreso
-      closePreviousPopup();  // Cerrar popup anterior
-      console.log("somos la activelayers",activeLayers)
-
-      const coordinates = e.lngLat;
-
-      // Transformar coordenadas
-      const transformedCoordinates = convertCoordsTo3857([[e.lngLat.lng, e.lngLat.lat]]);
-
-      // Filtrar capas activasif
-      const activeLayerObjects = availableLayers.filter((layer) => activeLayers.includes(layer.id));
-      console.log(availableLayers.filter((layer) => activeLayers.includes(layer.id)))
-      if (activeLayerObjects.length === 0) {
-          console.log("No hay capas activas para consultar.");
-          queryInProgress = false;  // Reiniciar el estado de la consulta
-          return;  // Si no hay capas activas, no hacer ninguna consulta
-      }
-
-      let foundProperties = false; // Marcar si se encontraron propiedades
-
-      // Iterar sobre capas activas y hacer la consulta solo una vez
-      for (const layer of activeLayerObjects) {
-          console.log(`Consultando datos para la capa: ${layer.id} con URL: ${layer.url}`);
-
-          // Verificar que la capa siga activa antes de hacer la consulta
-          if (!activeLayers.includes(layer.id)) {
-              console.log(`La capa ${layer.id} ya no está activa, saltando consulta.`);
-              continue;  // Si la capa ya no está activa, saltar esta iteración
-          }
-
-          const propertiesArray = await fetchWFSData(transformedCoordinates[0], layer.url);
-          console.log("Propiedades obtenidas:", propertiesArray);
-
-          if (propertiesArray && Object.keys(propertiesArray).length > 0) {
-              currentPopup = showPopupWithAllProperties(map, coordinates, propertiesArray);
-              foundProperties = true;  // Marcamos que se encontraron propiedades// Salimos después de mostrar el popup de la primera capa con propiedades
-          } else {
-              console.log("No se encontraron propiedades para mostrar.");
-          }
-      }
-
-      if (!foundProperties) {
-          console.log("No se encontraron propiedades en ninguna capa.");
-      }
-
-      queryInProgress = false;  // Reiniciar el estado de la consulta
-  };
-
-  // Antes de añadir un nuevo evento de clic, eliminar cualquier evento anterior
-  removePreviousClickListener();  // Asegurarse de que no haya múltiples listeners activos
-
-  // Añadir un nuevo evento de clic si hay capas activas
-  if (activeLayers.length > 0) {
-      clickListener = handleMapClick;
-      map.on('click', clickListener);
-  } else {
-      console.log("No hay capas activas, eliminando listener de clic.");
-      removePreviousClickListener();  // Eliminar el listener si no hay capas activas
-  }
-}
-
-
-
-  
-  
   function showPopupWithAllProperties(map, coordinates, properties) {
     const popupContent = document.createElement('div');
     popupContent.innerHTML = `
         <h5>Propiedades</h5>
         <ul>
-            ${Object.entries(properties).map(([key, value]) => `<li><strong>${key}:</strong> ${value}</li>`).join('')}
+            ${Object.entries(properties)
+              .map(
+                ([key, value]) => `<li><strong>${key}:</strong> ${value}</li>`
+              )
+              .join('')}
         </ul>
     `;
 
     // Crear el popup y añadirlo al mapa
-    const popup = new maplibregl.Popup({ offset: 37, anchor: 'bottom' })
+    const popup = new maplibregl.Popup({
+      offset: 37,
+      anchor: 'bottom',
+      closeOnClick: true,
+    })
       .setDOMContent(popupContent)
       .setLngLat(coordinates)
       .addTo(map);
 
     return popup;
-}
+  }
 
-
-
-  
-
-// Agregar el listener de clic al mapa
+  // Agregar el listener de clic al mapa
 
   const toggleInfo = () => {
     if (infoExpanded) {
@@ -708,7 +643,6 @@ function PopupLogica(map: maplibregl.Map, availableLayers: Layer[], activeLayers
               type: 'raster',
               source: layer.id,
             });
-            
           }
         }
         map.moveLayer('polygons-layer');
@@ -736,9 +670,7 @@ function PopupLogica(map: maplibregl.Map, availableLayers: Layer[], activeLayers
     addActiveLayers(map, availableLayers, activeLayers, circle);
   }
 
-
   return (
-    
     <div className="h-full w-full relative">
       <div ref={mapContainer} style={{ width: '100%', height: '100%' }}></div>
 
@@ -751,7 +683,6 @@ function PopupLogica(map: maplibregl.Map, availableLayers: Layer[], activeLayers
         </div>
 
         {/* Selector de provincia */}
-
 
         <div
           className="flex items-center space-x-4 bg-white rounded-full shadow-lg py-1.5 px-4"

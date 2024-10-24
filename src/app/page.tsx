@@ -14,7 +14,6 @@ const LoginPage = () => {
   const router = useRouter();
 
   const handleLogin = async (e) => {
-    console.log(e);
     e.preventDefault(); // Evitar el comportamiento por defecto del formulario
 
     // // Realizar la autenticación contra GeoServer
@@ -42,6 +41,7 @@ const LoginPage = () => {
         setError('redirigiendo...');
         router.push('/home');
       } else {
+        console.log(res);
         setError('Credenciales incorrectas. Intenta de nuevo.');
       }
     } catch (error) {

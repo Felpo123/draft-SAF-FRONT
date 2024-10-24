@@ -1,4 +1,4 @@
-import { Incident, incidentsData } from '@/lib/data';
+import { geojsonData, Incident, incidentsData } from '@/lib/data';
 import { columns } from './columns';
 import { DataTable } from './data-table';
 import { agruparIncidentesPorEvento, Geojson } from '@/lib/mapUtils';
@@ -26,7 +26,9 @@ const fetchDataIncident = async () => {
 };
 
 export default async function DemoPage() {
-  const data = await fetchDataIncident();
+  const geojson = geojsonData;
+  const data = agruparIncidentesPorEvento(geojson.features);
+  // const data = await fetchDataIncident();
   const session = await auth();
 
   console.log('SESSION', session);

@@ -32,7 +32,7 @@ import jsPDF from 'jspdf';
 import UploadButton from '@/components/UploadButton';
 import React from 'react';
 import { Input } from '@/components/ui/input';
-import { Feature } from '@/lib/mapUtils';
+import { Feature, IncidentProperties } from '@/lib/mapUtils';
 import {
   Select,
   SelectContent,
@@ -58,19 +58,21 @@ export function DataTable<TData, TValue>({
 
   //add action column
 
-  const generatePDF = async (incident: Incident) => {
+  const generatePDF = async (incident: IncidentProperties) => {
     const doc = new jsPDF();
-    doc.text('Este es un PDF generado en el frontend', 10, 10);
-    doc.text(`Nombre: ${incident.nombre}`, 10, 20);
-    doc.text(`Estado: ${incident.estado}`, 10, 30);
-    doc.text(`Origen: ${incident.origen}`, 10, 40);
-    doc.text(`Región: ${incident.region}`, 10, 50);
-    doc.text(`Provincia: ${incident.provincia}`, 10, 60);
-    doc.text(`Comuna: ${incident.comuna}`, 10, 70);
-    doc.text(`Ciudad: ${incident.ciudad}`, 10, 80);
-    doc.text(`Última Actualización: ${incident.ultima_actualizacion}`, 10, 90);
 
-    doc.save(`${incident.nombre}.pdf`);
+    // Añade texto
+    doc.text('Este es un PDF generado en el frontend', 10, 10);
+    doc.text(`Nombre: ${incident.nom_com}`, 10, 20);
+    doc.text(`Estado: ${incident.estado}`, 10, 30);
+    doc.text(`Origen: ${incident.termino}`, 10, 40);
+
+    // Añade una imagen
+    const imgData = '/imgs/logo.png'; // Usa la ruta de la imagen o una URL base64
+    doc.addImage(imgData, 'PNG', 15, 100, 180, 80); // Posiciona la imagen en el PDF
+
+    // Descarga el PDF
+    doc.save(`${incident.nom_com}.pdf`);
   };
 
   if (!columns.find((column) => column.id === 'actions')) {
@@ -121,7 +123,7 @@ export function DataTable<TData, TValue>({
               aria-label="Download Report"
               className="p-2 hover:bg-gray-200 rounded"
               variant="outline"
-              onClick={() => console.log('Download Report')}
+              onClick={() => generatePDF(incident.properties)}
             >
               <FileText size={20} />
             </Button>

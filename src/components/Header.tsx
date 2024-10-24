@@ -1,21 +1,21 @@
-'use client'
-import React from 'react'
-import { Button } from './ui/button'
-import { useTheme } from 'next-themes'
-import MobileSidebar from './MobileSidebar'
-import { usePathname } from 'next/navigation'
+'use client';
+import React from 'react';
+import { Button } from './ui/button';
+import { useTheme } from 'next-themes';
+import MobileSidebar from './MobileSidebar';
+import { usePathname } from 'next/navigation';
 
 function Header() {
-  const { setTheme } = useTheme()
-  const pathname = usePathname()
+  const { setTheme } = useTheme();
+  const pathname = usePathname();
 
-  const noHeaderRoutes = ['/dashboard', '/maplibre']
+  const noHeaderRoutes = ['/dashboard', '/maplibre'];
 
-  const handleToggle = () => { }
+  const handleToggle = () => {};
 
   if (noHeaderRoutes.includes(pathname)) {
     return (
-      <header className="bg-white shadow-md sm:hidden ">
+      <header className="bg-white shadow-md sm:hidden">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center gap-4">
           <div className="flex items-center">
             <MobileSidebar />
@@ -25,8 +25,7 @@ function Header() {
             size="icon"
             className="ml-auto"
             onClick={handleToggle}
-          >
-          </Button>
+          ></Button>
           <img
             alt="Logo SAF"
             src="https://gorev.moncosta.org/assets/images/logos/SAF_big.png"
@@ -44,7 +43,7 @@ function Header() {
           />
         </div>
       </header>
-    )
+    );
   }
 
   return (
@@ -82,7 +81,7 @@ function Header() {
         />
       </div>
     </header>
-  )
+  );
 }
 
-export default Header
+export default Header;
