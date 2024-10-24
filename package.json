@@ -30,6 +30,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
     "lucide-react": "^0.438.0",
     "mapbox-gl": "^3.7.0",
     "mapbox-gl-ruler-control": "^0.0.2",

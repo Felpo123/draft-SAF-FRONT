@@ -40,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import 'jspdf-autotable';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -58,21 +59,100 @@ export function DataTable<TData, TValue>({
 
   //add action column
 
-  const generatePDF = async (incident: IncidentProperties) => {
-    const doc = new jsPDF();
+  const generatePDF = (
+    incidentData: IncidentProperties,
+    imageUrl: '/imgs/logo.png'
+  ) => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
 
-    // Añade texto
-    doc.text('Este es un PDF generado en el frontend', 10, 10);
-    doc.text(`Nombre: ${incident.nom_com}`, 10, 20);
-    doc.text(`Estado: ${incident.estado}`, 10, 30);
-    doc.text(`Origen: ${incident.termino}`, 10, 40);
+    // Fuente personalizada y colores
+    doc.setFont('helvetica', 'bold');
+    const primaryColor: [number, number, number] = [63, 81, 181];
+    const secondaryColor: [number, number, number] = [33, 150, 243];
+    const textColor: [number, number, number] = [40, 40, 40];
 
-    // Añade una imagen
-    const imgData = '/imgs/logo.png'; // Usa la ruta de la imagen o una URL base64
-    doc.addImage(imgData, 'PNG', 15, 100, 180, 80); // Posiciona la imagen en el PDF
+    // Encabezado del documento
+    doc.setTextColor(...primaryColor);
+    doc.setFontSize(22);
+    doc.text('Incident Report', 105, 20, undefined, null);
 
-    // Descarga el PDF
-    doc.save(`${incident.nom_com}.pdf`);
+    doc.setFontSize(14);
+    doc.setTextColor(...secondaryColor);
+    doc.text('Geospatial Monitoring System', 105, 30, undefined, null);
+
+    // Espacio debajo del encabezado
+    doc.setDrawColor(...primaryColor);
+    doc.setLineWidth(1);
+    doc.line(15, 35, 195, 35);
+
+    // Información del incidente
+    doc.setTextColor(...textColor);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Incident Name: ${incidentData.nom_com}`, 15, 45);
+    doc.text(`Region: ${incidentData.nom_pro}`, 15, 55);
+    doc.text(`Date: ${incidentData.date}`, 15, 65);
+
+    // Incluir imagen (si es necesario)
+    if (imageUrl) {
+      doc.addImage(imageUrl, 'JPEG', 140, 45, 50, 50);
+    }
+
+    // Sección de Detalles del Incidente
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Incident Details', 15, 80);
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Description: ${incidentData.date}`, 15, 90, {
+      maxWidth: 180,
+    });
+    doc.text(`Type: ${incidentData.cu_evento}`, 15, 100);
+    doc.text(`Status: ${incidentData.estado}`, 15, 110);
+
+    // Tabla de información adicional
+    const tableData = [
+      ['Parameter', 'Value'],
+      ['Incident ID', incidentData.id],
+      ['Last Update', incidentData.date],
+      ['Cause', incidentData.superf],
+      ['Location', incidentData.id],
+    ];
+
+    doc.autoTable({
+      startY: 120,
+      head: [['Field', 'Details']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: primaryColor,
+        textColor: [255, 255, 255],
+        fontSize: 12,
+      },
+      bodyStyles: {
+        fontSize: 10,
+      },
+    });
+
+    // Pie de página
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(10);
+    doc.setTextColor(150);
+    doc.text(
+      'Report generated automatically by the Geospatial Monitoring System',
+      105,
+      pageHeight - 10,
+      undefined,
+      null
+    );
+
+    // Guardar el PDF
+    doc.save(`Incident_Report_${incidentData.id}.pdf`);
   };
 
   if (!columns.find((column) => column.id === 'actions')) {
@@ -123,7 +203,7 @@ export function DataTable<TData, TValue>({
               aria-label="Download Report"
               className="p-2 hover:bg-gray-200 rounded"
               variant="outline"
-              onClick={() => generatePDF(incident.properties)}
+              onClick={() => generatePDF(incident.properties, '/imgs/logo.png')}
             >
               <FileText size={20} />
             </Button>
