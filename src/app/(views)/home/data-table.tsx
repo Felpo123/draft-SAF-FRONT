@@ -124,20 +124,20 @@ export function DataTable<TData, TValue>({
       ['Location', incidentData.id],
     ];
 
-    doc.autoTable({
-      startY: 120,
-      head: [['Field', 'Details']],
-      body: tableData,
-      theme: 'grid',
-      headStyles: {
-        fillColor: primaryColor,
-        textColor: [255, 255, 255],
-        fontSize: 12,
-      },
-      bodyStyles: {
-        fontSize: 10,
-      },
-    });
+    // doc.autoTable({
+    //   startY: 120,
+    //   head: [['Field', 'Details']],
+    //   body: tableData,
+    //   theme: 'grid',
+    //   headStyles: {
+    //     fillColor: primaryColor,
+    //     textColor: [255, 255, 255],
+    //     fontSize: 12,
+    //   },
+    //   bodyStyles: {
+    //     fontSize: 10,
+    //   },
+    // });
 
     // Pie de página
     const pageHeight = doc.internal.pageSize.height;

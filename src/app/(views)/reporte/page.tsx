@@ -18,11 +18,10 @@ async function MapLibrePage({
 
   const idEvent = searchParams?.idEvent || '01';
 
-  // const geojsonData = await geoserverApi.getIncidentsByIDEvent(idEvent);
+  const geojsonData = await geoserverApi.getIncidentsByIDEvent(idEvent);
+  console.log('geojsonData', geojsonData);
 
-  const geoJsonData = geojsonData;
-
-  if (!geoJsonData) {
+  if (!geojsonData) {
     return notFound();
   }
 

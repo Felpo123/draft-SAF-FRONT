@@ -24,20 +24,19 @@ async function MapLibrePage({
 
   const idEvent = searchParams?.idEvent || '01';
 
-  // const geojsonData = await fetchIncidentGEOJSON(idEvent)
+  const geojsonData = await fetchIncidentGEOJSON(idEvent);
+  console.log('geojsonData', geojsonData);
 
-  // if (!geojsonData) {
-  //   return notFound();
-  // }
-
-  const geoJsonData = geojsonData;
+  if (!geojsonData) {
+    return notFound();
+  }
 
   return (
     <Suspense key={idEvent} fallback={<LoadingSpinner />}>
       <DynamicMap
         nameEvent={nameEvent}
         idEvent={idEvent}
-        geoJson={geoJsonData}
+        geoJson={geojsonData}
       />
     </Suspense>
   );

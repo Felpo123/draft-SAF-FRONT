@@ -6,9 +6,13 @@ import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth-config';
 
 const fetchDataIncident = async () => {
-  const wfsUrl = `http://192.168.1.116:8080/geoserver/desafio/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=desafio:incidentes&outputFormat=application/json`;
+  const wfsUrl = `http://192.168.1.116:8080/geoserver/desafio/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=desafio:incidentes&outputFormat=application/json`;
   try {
-    const response = await fetch(wfsUrl);
+    const response = await fetch(wfsUrl, {
+      headers: {
+        Authorization: 'Basic ' + btoa(`admin:geoserver`),
+      },
+    });
     if (!response.ok) {
       throw new Error(
         `Error en la respuesta del servidor: ${response.statusText}`
@@ -26,12 +30,7 @@ const fetchDataIncident = async () => {
 };
 
 export default async function DemoPage() {
-  const geojson = geojsonData;
-  const data = agruparIncidentesPorEvento(geojson.features);
-  // const data = await fetchDataIncident();
-  const session = await auth();
-
-  console.log('SESSION', session);
+  const data = await fetchDataIncident();
 
   if (!data) {
     return notFound();
