@@ -1,22 +1,24 @@
+import { Geojson } from './mapUtils';
+
 export type Incident = {
-  id: string
-  nombre: string
-  estado: string
-  zona: 'Continental' | 'Insular' | 'Antartica'
-  origen: 'Natural' | 'Sin informacion' | 'Antropico' | 'Biologico'
+  id: string;
+  nombre: string;
+  estado: string;
+  zona: 'Continental' | 'Insular' | 'Antartica';
+  origen: 'Natural' | 'Sin informacion' | 'Antropico' | 'Biologico';
   tipo:
     | 'Incendios'
     | 'Inundaciones'
     | 'Remociones en masa'
     | 'Terremotos'
-    | 'Tsunamis'
-  region: string
-  provincia: string
-  comuna: string
-  ciudad: string
-  coordenada: { lat: number; lng: number }
-  ultima_actualizacion: string
-}
+    | 'Tsunamis';
+  region: string;
+  provincia: string;
+  comuna: string;
+  ciudad: string;
+  coordenada: { lat: number; lng: number };
+  ultima_actualizacion: string;
+};
 
 export const incidentsData = [
   {
@@ -173,4 +175,66 @@ export const incidentsData = [
     coordenada: { lat: -36.6068, lng: -72.1025 },
     ultima_actualizacion: '2021-03-25',
   },
-] as Incident[]
+] as Incident[];
+
+export const geojsonData: Geojson = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [-72.645233, -38.737078],
+            [-72.641389, -38.739934],
+            [-72.638854, -38.735764],
+            [-72.642167, -38.733119],
+            [-72.645233, -38.737078],
+          ],
+        ],
+      },
+      properties: {
+        id: 1,
+        id_evento: 'INC-12345',
+        superf: 120.5,
+        nom_reg: 'La Araucanía',
+        nom_pro: 'Cautín',
+        nom_com: 'Temuco',
+        cut_reg: '09',
+        cut_pro: '091',
+        cut_com: '09101',
+        cu_evento: '01',
+        tipo_event: 'Incendio Forestal',
+        nom_event: 'Incendio en Temuco',
+        date: '2024-10-22T14:30:00Z',
+        estado: 'Activo',
+        termino: null,
+      },
+    },
+    {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [-70.64827, -33.45694],
+      },
+      properties: {
+        id: 2,
+        id_evento: 'TER-67890',
+        superf: 0,
+        nom_reg: 'Metropolitana',
+        nom_pro: 'Santiago',
+        nom_com: 'Santiago',
+        cut_reg: '13',
+        cut_pro: '131',
+        cut_com: '13101',
+        cu_evento: '02',
+        tipo_event: 'Terremoto',
+        nom_event: 'Terremoto en Santiago',
+        date: '2024-09-15T03:25:00Z',
+        estado: 'Finalizado',
+        termino: '2024-09-15T04:00:00Z',
+      },
+    },
+  ],
+};

@@ -1,12 +1,12 @@
-'use client'
-import 'maplibre-gl/dist/maplibre-gl.css'
-import maplibregl, { GeoJSONSource, Map , Popup} from 'maplibre-gl'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import InfraestructureCard from './InfraestructureCard'
-import GraphsCard from './GraphsCard'
-import MapBar from './MapBar'
-import WeatherCard from './WeatherCard'
-import Timeline from './TimelineMapBar'
+'use client';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import maplibregl, { GeoJSONSource, Map, Popup } from 'maplibre-gl';
+import React, { use, useCallback, useEffect, useRef, useState } from 'react';
+import InfraestructureCard from './InfraestructureCard';
+import GraphsCard from './GraphsCard';
+import MapBar from './MapBar';
+import WeatherCard from './WeatherCard';
+import Timeline from './TimelineMapBar';
 import {
   extractDatesAndComunas,
   extractDatesAndIds,
@@ -32,13 +32,13 @@ import {
   SelectValue,
 } from './ui/select';
 import { Feature, Polygon, GeoJsonProperties } from 'geojson';
-import RulerControl from '@mapbox-controls/ruler'
-import '@mapbox-controls/ruler/src/index.css'
-import '@mapbox-controls/compass/src/index.css'
-import * as turf from '@turf/turf'
-import BarChartToMap from './BarChartToMap'
+import RulerControl from '@mapbox-controls/ruler';
+import '@mapbox-controls/ruler/src/index.css';
+import '@mapbox-controls/compass/src/index.css';
+import * as turf from '@turf/turf';
+import BarChartToMap from './BarChartToMap';
 
-import '@mapbox-controls/tooltip/src/index.css'
+import '@mapbox-controls/tooltip/src/index.css';
 import proj4 from 'proj4';
 import { popup } from 'leaflet'
 
@@ -69,14 +69,26 @@ const LayerisMapLibre = ({
   geoJson,
 }: LayerisMapLibreProps) => {
   type CircleType = Feature<Polygon, GeoJsonProperties> | null;
-  const setPopupInfo = useRef<Map | null>(null)
-  const popupInfo  = useRef<Map | null>(null)
+  const setPopupInfo = useRef<Map | null>(null);
+  const popupInfo = useRef<Map | null>(null);
   const [circle, setCircle] = useState<CircleType>(null);
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const dates = extractDatesAndIds(geoJson).fechasUnicas;
   const [incidentDates, setIncidentDates] = useState<string[]>(dates);
   const lastDate = dates[dates.length - 1];
+  const [selectedDate, setSelectedDate] = useState(lastDate);
+  const comunas = [
+    'Todo el desastre',
+    ...extractDatesAndComunas(geoJson).provinciasUnicas,
+  ];
+  const [selectedComuna, setSelectedComuna] = useState('Todo el desastre'); // Provincia seleccionada
+  const [superficieTotal, setSuperficieTotal] = useState(0); // Nueva variable para la suma de superf
+  const [layersOpen, setLayersOpen] = useState(false);
+  const [activeLayers, setActiveLayers] = useState<string[]>([]);
+  const [currentPopup, setCurrentPopup] = useState<maplibregl.Popup | null>(
+    null
+  );
   const [selectedDate, setSelectedDate] = useState(lastDate)
   const comunas = ['Todo el desastre', ...extractDatesAndComunas(geoJson).provinciasUnicas]
   const [selectedComuna, setSelectedComuna] = useState('Todo el desastre') // Provincia seleccionada
@@ -392,8 +404,6 @@ const LayerisMapLibre = ({
     return { centroid: centroidCoords, maxDistance: adjustedDistance, circle };
   };
 
-
-
   const handleDateChange = (timelineDate?: string) => {
     let incidentDate;
 
@@ -438,28 +448,28 @@ const LayerisMapLibre = ({
     </Filter>`;
 
     const encodedBboxFilter = encodeURIComponent(bboxFilter);
-    
+
     // Construir la URL para la solicitud WFS
     const wfsUrl = `http://192.168.1.116:8080/geoserver/desafio/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=${layerURL}&outputFormat=application/json&filter=${encodedBboxFilter}`;
-    
+
     try {
-        const response = await fetch(wfsUrl);
-        if (!response.ok) {
-            throw new Error(`Error en la solicitud: ${response.status}`);
-        }
+      const response = await fetch(wfsUrl);
+      if (!response.ok) {
+        throw new Error(`Error en la solicitud: ${response.status}`);
+      }
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (data.features && data.features.length > 0) {
-          return data.features.map(feature => feature.properties); // Retornar propiedades de la primera característica
-        } else {
-            return null; // Retornar null si no hay características
-        }
+      if (data.features && data.features.length > 0) {
+        return data.features.map((feature) => feature.properties); // Retornar propiedades de la primera característica
+      } else {
+        return null; // Retornar null si no hay características
+      }
     } catch (error) {
-        console.error("Error al obtener los datos WFS:", error);
-        return null; // Retornar null en caso de error
+      console.error('Error al obtener los datos WFS:', error);
+      return null; // Retornar null en caso de error
     }
-};
+  };
 
   const getCqlFilterForWms = (circleCoords) => {
     // Convertir coordenadas de EPSG:4326 a EPSG:3857
@@ -498,14 +508,15 @@ const LayerisMapLibre = ({
       });
 
       mapRef.current.on('load', () => {
-        mapRef.current.addControl(
+        mapRef.current?.addControl(
           new maplibregl.NavigationControl(),
           'bottom-right'
         );
 
+        mapRef.current?.on('click', handleMapClick);
+
         handleDateChange(); // Llamar a handleDateChange una vez que el estilo esté cargado
       });
-      // mapRef.current.on('click', handleMapClick)
     }
   }, []);
 
@@ -631,7 +642,11 @@ const LayerisMapLibre = ({
     popupContent.appendChild(contentContainer);
   
     // Crear el popup y añadirlo al mapa
-    const popup = new maplibregl.Popup({ offset: 37, anchor: 'bottom' })
+    const popup = new maplibregl.Popup({
+      offset: 37,
+      anchor: 'bottom',
+      closeOnClick: true,
+    })
       .setDOMContent(popupContent)
       .setLngLat(coordinates)
       .addTo(map);
@@ -711,7 +726,6 @@ const LayerisMapLibre = ({
               type: 'raster',
               source: layer.id,
             });
-            
           }
         }
         map.moveLayer('polygons-layer');
@@ -739,9 +753,7 @@ const LayerisMapLibre = ({
     addActiveLayers(map, availableLayers, activeLayers, circle);
   }
 
-
   return (
-    
     <div className="h-full w-full relative">
       <div ref={mapContainer} style={{ width: '100%', height: '100%' }}></div>
 
@@ -754,7 +766,6 @@ const LayerisMapLibre = ({
         </div>
 
         {/* Selector de provincia */}
-
 
         <div
           className="flex items-center space-x-4 bg-white rounded-full shadow-lg py-1.5 px-4"
