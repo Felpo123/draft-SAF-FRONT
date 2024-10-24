@@ -77,18 +77,6 @@ const LayerisMapLibre = ({
   const dates = extractDatesAndIds(geoJson).fechasUnicas;
   const [incidentDates, setIncidentDates] = useState<string[]>(dates);
   const lastDate = dates[dates.length - 1];
-  const [selectedDate, setSelectedDate] = useState(lastDate);
-  const comunas = [
-    'Todo el desastre',
-    ...extractDatesAndComunas(geoJson).provinciasUnicas,
-  ];
-  const [selectedComuna, setSelectedComuna] = useState('Todo el desastre'); // Provincia seleccionada
-  const [superficieTotal, setSuperficieTotal] = useState(0); // Nueva variable para la suma de superf
-  const [layersOpen, setLayersOpen] = useState(false);
-  const [activeLayers, setActiveLayers] = useState<string[]>([]);
-  const [currentPopup, setCurrentPopup] = useState<maplibregl.Popup | null>(
-    null
-  );
   const [selectedDate, setSelectedDate] = useState(lastDate)
   const comunas = ['Todo el desastre', ...extractDatesAndComunas(geoJson).provinciasUnicas]
   const [selectedComuna, setSelectedComuna] = useState('Todo el desastre') // Provincia seleccionada
